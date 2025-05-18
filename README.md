@@ -1,1 +1,1 @@
-# Project Next.js
+# Project Next.js & PostgreSQL
