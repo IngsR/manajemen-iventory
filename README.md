@@ -4,7 +4,7 @@ Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Creat
 
 ---
 
-## 🧠 Canvas Ringkasan Proyek
+## 🧠 Ringkasan Proyek
 
 | Komponen         | Deskripsi |
 |------------------|-----------|
