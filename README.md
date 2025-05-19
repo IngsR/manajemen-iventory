@@ -4,7 +4,7 @@ Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Creat
 
 ---
 
-## 🧠 Ringkasan Proyek
+## 🧠 Ringkasan 
 
 | Komponen         | Deskripsi |
 |------------------|-----------|
@@ -20,7 +20,7 @@ Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Creat
 
 ---
 
-## 🚀 Cara Menjalankan Proyek
+## 🚀 Cara Menjalankan
 
 ### 1. Clone Repository
 ```bash
@@ -53,4 +53,12 @@ npm run dev
 
 📝 Lisensi
 Proyek ini dilisensikan di bawah lisensi MIT. Lihat file LICENSE untuk informasi lebih lanjut.
+
+<div align="center">
+
+---
+
+## 👨‍💻 Author [IngsR](https://github.com/IngsR) Ikhwan Ramadhan, 2025
+
+</div>
 
