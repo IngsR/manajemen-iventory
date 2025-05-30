@@ -3,7 +3,7 @@
 Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Create, Read, Update, Delete). Proyek ini ditujukan untuk memudahkan pencatatan, pemantauan, dan pengelolaan stok serta kondisi barang di suatu organisasi atau perusahaan.
 
 ---
-daas
+da
 ## 🧠 Ringkasan 
 
 | Komponen         | Deskripsi |
