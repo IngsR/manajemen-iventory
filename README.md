@@ -51,14 +51,60 @@ npm run dev
 ```
 ---
 
-📝 Lisensi
-Proyek ini dilisensikan di bawah lisensi MIT. Lihat file LICENSE untuk informasi lebih lanjut.
-
 <div align="center">
+  <h1> 📺 USER INTERFACE</h1>
+<h2 align="center"><strong>Form Login</strong></h2>
+
+![MyDokumen UI](./Ui_Preview/FormLogin.png)
 
 ---
 
-## 👨‍💻 Author [IngsR](https://github.com/IngsR) Ikhwan Ramadhan, 2025
+<h1 align="center"><strong>Admin User Interface</strong></h1>
+<h2 align="center"><strong>Dashboard Admin</strong></h2>
 
+![Dashboard Admin – Bagian 1](./Ui_Preview/dasboard_admin1.png)
+![Dashboard Admin – Bagian 2](./Ui_Preview/dasboard-admin2.png)
+![Dashboard Admin – Bagian 3](./Ui_Preview/dasboard-admin3.png)
+
+
+<h2 align="center"><strong>Manajemen User</strong></h2>
+
+![Dashboard Admin](./Ui_Preview/manajmen-user.png)
+
+<h2 align="center"><strong>Aktifitas Log</strong></h2>
+
+![Dashboard Admin](./Ui_Preview/log-aktifitas.png)
+
+---
+
+<h1 align="center"><strong>User Interface Karyawan</strong></h1>
+<h2 align="center"><strong>Beranda User</strong></h2>
+
+![Dashboard Admin](./Ui_Preview/Beranda-user.png)
+
+<h2 align="center"><strong>Statistik Barang</strong></h2>
+
+![Dashboard Admin](./Ui_Preview/statistik-user.png)
+![Dashboard Admin](./Ui_Preview/statistik-user2.png)
+
+<h2 align="center"><strong>Barang Cacat</strong></h2>
+
+![Dashboard Admin](./Ui_Preview/brg-cacat.png)
+
+
+---
+
+## 📝 Lisensi
+<div align="center">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
+  </a>
+  
+  Proyek ini dilisensikan di bawah lisensi **MIT**.  
+  Lihat file [LICENSE](./LICENSE) untuk informasi selengkapnya.
 </div>
 
+## 👨‍💻 Author [IngsR](https://github.com/IngsR) Ikhwan Ramadhan-2025
+
+</div>
+---
