@@ -47,7 +47,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/nama_database
 
 ### 5. Jalankan Aplikasi
 ```bash
-npm run dev
+npm start
 ```
 ---
 
