@@ -57,9 +57,11 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 docker-compose up --build
 ```
 
+---
+
 ## Running nodeJS
 
-### 2. Install Dependency
+### 1. Install Dependency
 
 ```bash
 npm install
@@ -67,19 +69,13 @@ npm install
 yarn install
 ```
 
-### 5. Install next
+### 2. Install next
 
 ```bash
 npm run build
 ```
 
-### 4. Buat file .env
-
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/nama_database
-```
-
-### 5. Jalankan Aplikasi
+### 3. Running Aplikasi
 
 ```bash
 npm start
