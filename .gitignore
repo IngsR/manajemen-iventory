@@ -1,0 +1,51 @@
+node_modules
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+.yarn/
+.pnpm/
+
+# Logs
+logs/
+*.log
+
+# Production build artifacts
+.next/
+out/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+.env.staging.local
+
+# Local development server
+tmp/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Docker
+.dockerignore

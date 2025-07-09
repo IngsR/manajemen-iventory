@@ -376,7 +376,7 @@ export default function AdminChartsClient() {
                             isLoading ? 'animate-spin' : ''
                         }`}
                     />
-                    Muat Ulang Data
+                    Refresh
                 </Button>
             </div>
         );

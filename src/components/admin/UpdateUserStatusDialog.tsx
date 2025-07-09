@@ -47,9 +47,13 @@ export function UpdateUserStatusDialog({
             onOpenChange(false);
             return;
         }
+
         setIsSubmitting(true);
-        await onUpdateStatus(user.id, newStatus);
-        setIsSubmitting(false);
+        try {
+            await onUpdateStatus(String(user.id), newStatus); // ✅ FIXED
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

@@ -1,15 +1,37 @@
 version: '3.8'
 
 services:
-    nextjs:
+    # Next.js Application Service
+    app:
         build:
             context: .
             dockerfile: Dockerfile
         ports:
             - '3000:3000'
-        volumes:
-            - .:/app
-            - /app/node_modules
         environment:
-            - NODE_ENV=development
-        command: npm run dev -- --hostname 0.0.0.0
+            # Variabel lingkungan ini akan tersedia di dalam container 'app'
+            NODE_ENV: production
+            DATABASE_URL: postgresql://postgres:ikhwan123@db:5432/postgres
+
+        depends_on:
+            - db # Memastikan service 'db' dimulai sebelum 'app'
+        volumes:
+            - app_node_modules:/app/node_modules # Named volume untuk mempertahankan node_modules
+
+    # PostgreSQL Database Service
+    db:
+        image: postgres:16-alpine # Menggunakan versi Alpine PostgreSQL yang ringan
+        restart: always
+        environment:
+            # Variabel ini diperlukan oleh image PostgreSQL
+            POSTGRES_DB: postgres # Nama database Anda, sesuaikan dengan .env Anda
+            POSTGRES_USER: postgres # Nama pengguna database Anda, sesuaikan dengan .env Anda
+            POSTGRES_PASSWORD: ikhwan123 # Kata sandi database Anda (UBAH INI DI PRODUKSI!)
+        ports:
+            - '5432:5432' # Mengekspos PostgreSQL ke mesin host Anda (opsional, tapi berguna untuk pengembangan lokal/tools)
+        volumes:
+            - db_data:/var/lib/postgresql/data # Mempertahankan data database
+
+volumes:
+    db_data: # Mendefinisikan named volume untuk persistensi data PostgreSQL
+    app_node_modules: # Mendefinisikan named volume untuk node_modules (berguna untuk mencegah masalah host volume)

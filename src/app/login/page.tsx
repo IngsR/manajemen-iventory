@@ -1,19 +1,38 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { getCurrentUserAction } from '@/app/actions';
-import { redirect } from 'next/navigation';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 
-export default async function LoginPage() {
-    const user = await getCurrentUserAction();
+export default function LoginPage() {
+    const router = useRouter();
 
-    if (user) {
-        if (user.role === 'admin') {
-            redirect('/admin/dashboard');
-        } else {
-            redirect('/');
-        }
-    }
+    useEffect(() => {
+        // Deteksi user secara async
+        const checkUser = async () => {
+            try {
+                const user = await getCurrentUserAction();
+
+                if (user) {
+                    if (user.role === 'admin') {
+                        router.replace('/admin/dashboard');
+                    } else {
+                        router.replace('/');
+                    }
+                }
+            } catch (error) {
+                console.warn(
+                    '[LoginPage] Failed to fetch user session:',
+                    error,
+                );
+            }
+        };
+
+        checkUser();
+    }, [router]);
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -37,7 +56,7 @@ export default async function LoginPage() {
                 </div>
                 <LoginForm />
                 <p className="mt-10 text-center text-xs text-muted-foreground">
-                    Lupa password? Hubungi administrator Anda.
+                    Lupa password? Hubungi administrator.
                 </p>
             </div>
         </div>

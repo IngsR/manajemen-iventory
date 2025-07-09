@@ -29,7 +29,7 @@ export default function AdminLayout({
                 {children}
             </div>
             <footer className="bg-white text-black py-6 text-center text-sm w-full mt-auto border-t border-gray-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
-                © {currentYear || ''} Stockpile - Panel Admin.
+                © {currentYear || ''} IngsR - Ikhwan Ramadhan MIT LICENSE.
             </footer>
         </div>
     );

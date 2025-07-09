@@ -30,7 +30,7 @@ async function UserActions() {
                         >
                             <ShieldCheck className="h-5 w-5 sm:mr-1 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
                             <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
-                                Panel Admin
+                                Dashboard
                             </span>
                         </Button>
                         <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-slate-50 transition-all duration-300 ease-out group-hover:w-full"></span>

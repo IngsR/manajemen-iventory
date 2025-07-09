@@ -1,6 +1,9 @@
 import { z } from 'zod';
+import type { JWTPayload } from 'jose';
 
-// User Management Types
+/* =========================
+   USER MANAGEMENT TYPES
+========================= */
 export const UserRoleEnum = z.enum(['admin', 'employee']);
 export type UserRole = z.infer<typeof UserRoleEnum>;
 
@@ -23,14 +26,8 @@ export const LoginFormSchema = z.object({
 export type LoginFormSchemaType = z.infer<typeof LoginFormSchema>;
 
 export const CreateUserFormSchema = z.object({
-    username: z
-        .string()
-        .min(3, 'Username minimal 3 karakter')
-        .max(50, 'Username maksimal 50 karakter'),
-    password: z
-        .string()
-        .min(6, 'Password minimal 6 karakter')
-        .max(100, 'Password maksimal 100 karakter'),
+    username: z.string().min(3).max(50),
+    password: z.string().min(6).max(100),
     status: UserStatusEnum.default('active'),
 });
 export type CreateUserFormData = z.infer<typeof CreateUserFormSchema>;
@@ -43,22 +40,18 @@ export type UpdateUserStatusFormData = z.infer<
 >;
 
 export const ChangePasswordFormSchema = z.object({
-    password: z
-        .string()
-        .min(6, 'Password baru minimal 6 karakter')
-        .max(100, 'Password maksimal 100 karakter'),
+    password: z.string().min(6).max(100),
 });
 export type ChangePasswordFormData = z.infer<typeof ChangePasswordFormSchema>;
 
 export const ChangeUsernameFormSchema = z.object({
-    username: z
-        .string()
-        .min(3, 'Username minimal 3 karakter')
-        .max(50, 'Username maksimal 50 karakter'),
+    username: z.string().min(3).max(50),
 });
 export type ChangeUsernameFormData = z.infer<typeof ChangeUsernameFormSchema>;
 
-// Inventory Item Types
+/* =========================
+   INVENTORY ITEM TYPES
+========================= */
 export interface InventoryItem {
     id: number;
     name: string;
@@ -68,31 +61,21 @@ export interface InventoryItem {
 }
 
 export const ItemFormSchema = z.object({
-    name: z
-        .string()
-        .min(1, 'Nama item harus diisi')
-        .max(100, 'Nama item maksimal 100 karakter'),
-    quantity: z.coerce
-        .number()
-        .int('Kuantitas harus berupa angka bulat')
-        .min(0, 'Kuantitas tidak boleh negatif'),
-    category: z
-        .string()
-        .min(1, 'Kategori harus diisi')
-        .max(50, 'Kategori maksimal 50 karakter'),
-    location: z.string().max(100, 'Lokasi maksimal 100 karakter').optional(),
+    name: z.string().min(1).max(100),
+    quantity: z.coerce.number().int().min(0),
+    category: z.string().min(1).max(50),
+    location: z.string().max(100).optional(),
 });
 export type ItemFormData = z.infer<typeof ItemFormSchema>;
 
 export const AdjustQuantityFormSchema = z.object({
-    quantity: z.coerce
-        .number()
-        .int('Kuantitas harus berupa angka bulat')
-        .min(0, 'Kuantitas tidak boleh negatif'),
+    quantity: z.coerce.number().int().min(0),
 });
 export type AdjustQuantityFormData = z.infer<typeof AdjustQuantityFormSchema>;
 
-// Defective Item Types
+/* =========================
+   DEFECTIVE ITEM TYPES
+========================= */
 export const DefectiveItemStatusEnum = z.enum([
     'Pending Review',
     'Returned to Supplier',
@@ -129,20 +112,12 @@ export interface DefectiveItemLogEntry extends DefectiveItemLog {
 }
 
 export const LogDefectiveItemFormSchema = z.object({
-    inventory_item_id: z.coerce
-        .number({ invalid_type_error: 'ID Item harus berupa angka' })
-        .positive('Item inventaris harus dipilih'),
+    inventory_item_id: z.coerce.number().positive(),
     item_name_at_log_time: z.string(),
-    quantity_defective: z.coerce
-        .number()
-        .int('Kuantitas cacat harus berupa angka bulat')
-        .min(1, 'Kuantitas cacat minimal 1'),
-    reason: z
-        .string()
-        .min(1, 'Alasan harus diisi')
-        .max(255, 'Alasan maksimal 255 karakter'),
+    quantity_defective: z.coerce.number().int().min(1),
+    reason: z.string().min(1).max(255),
     status: DefectiveItemStatusEnum.default('Pending Review'),
-    notes: z.string().max(500, 'Catatan maksimal 500 karakter').optional(),
+    notes: z.string().max(500).optional(),
 });
 export type LogDefectiveItemFormData = z.infer<
     typeof LogDefectiveItemFormSchema
@@ -150,21 +125,23 @@ export type LogDefectiveItemFormData = z.infer<
 
 export const UpdateDefectiveItemStatusFormSchema = z.object({
     status: DefectiveItemStatusEnum,
-    notes: z.string().max(500, 'Catatan maksimal 500 karakter').optional(),
+    notes: z.string().max(500).optional(),
 });
 export type UpdateDefectiveItemStatusFormData = z.infer<
     typeof UpdateDefectiveItemStatusFormSchema
 >;
 
-// Session type for middleware and auth checks
-export interface SessionPayload {
+/* =========================
+   SESSION / AUTH TYPES
+========================= */
+export interface SessionPayload extends JWTPayload {
     userId: number;
     role: UserRole;
-    iat?: number;
-    exp?: number;
 }
 
-// Activity Log Types
+/* =========================
+   ACTIVITY LOG TYPES
+========================= */
 export interface ActivityLog {
     id: number;
     user_id: number | null;

@@ -21,16 +21,13 @@ import { query } from '@/lib/db';
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import { redirect } from 'next/navigation';
+import { JWT_SECRET } from '@/lib/jwt-secret';
 import { unstable_noStore as noStore, revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'your-fallback-super-secret-key-32-chars',
-);
 const COOKIE_NAME = 'session';
 const BCRYPT_SALT_ROUNDS = 10;
 
-// --- Internal Helper for Activity Logging ---
 async function _logActivity(
     performingUser: User | null,
     action: string,
@@ -75,10 +72,12 @@ export async function loginAction(
     formData: LoginFormSchemaType,
 ): Promise<LoginResult> {
     noStore();
+
     console.log('[LoginAttempt] Received login data:', {
         username: formData.username,
         passwordProvided: formData.password ? 'Yes' : 'No',
     });
+
     try {
         const userResult = await query<{
             id: number;
@@ -91,45 +90,28 @@ export async function loginAction(
             [formData.username],
         );
 
-        console.log('[LoginAttempt] DB query result rows:', userResult.rows);
-
         if (userResult.rows.length === 0) {
-            console.log(
-                '[LoginAttempt] User not found in database:',
-                formData.username,
-            );
+            console.log('[LoginAttempt] User not found:', formData.username);
             return { success: false, message: 'Username atau password salah.' };
         }
 
         const userFromDb = userResult.rows[0];
-        console.log('[LoginAttempt] User found:', {
-            id: userFromDb.id,
-            username: userFromDb.username,
-            storedHashPresent: !!userFromDb.password_hash,
-            role: userFromDb.role,
-            status: userFromDb.status,
-        });
 
-        const isValidPassword = bcryptjs.compareSync(
+        const isValidPassword = await bcryptjs.compare(
             formData.password,
             userFromDb.password_hash,
-        );
-        console.log(
-            '[LoginAttempt] Password comparison result (bcrypt.compareSync):',
-            isValidPassword,
         );
 
         if (!isValidPassword) {
             console.warn(
-                `Login FAILED for user ${userFromDb.username}. Password mismatch.`,
+                `[LoginAttempt] Password mismatch for user ${userFromDb.username}`,
             );
             return { success: false, message: 'Username atau password salah.' };
         }
 
         if (userFromDb.status !== 'active') {
-            console.log(
-                '[LoginAttempt] User account is not active:',
-                userFromDb.username,
+            console.warn(
+                '[LoginAttempt] User is not active:',
                 userFromDb.status,
             );
             return {
@@ -139,7 +121,7 @@ export async function loginAction(
         }
 
         const user: User = {
-            id: userFromDb.id, // id is number
+            id: userFromDb.id,
             username: userFromDb.username,
             role: userFromDb.role,
             status: userFromDb.status as UserStatus,
@@ -150,29 +132,37 @@ export async function loginAction(
         const sessionPayload: SessionPayload = {
             userId: user.id,
             role: user.role,
-        }; // user.id is already number
+        };
+
         const token = await new SignJWT(sessionPayload)
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
             .setExpirationTime('24h')
             .sign(JWT_SECRET);
 
-        cookies().set(COOKIE_NAME, token, {
+        console.log('[LoginAttempt] JWT created:', token.slice(0, 25) + '...');
+
+        const cookieStore = await cookies(); // ✅ perbaikan penting!
+        cookieStore.set(COOKIE_NAME, token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24, // 24 hours
+            maxAge: 60 * 60 * 24, // 24 jam
             path: '/',
         });
 
-        console.log('[LoginAttempt] Login successful for user:', user.username);
         await _logActivity(user, 'User logged in');
+
         return {
             success: true,
             message: 'Login berhasil!',
-            user: { id: user.id, username: user.username, role: user.role },
+            user: {
+                id: user.id,
+                username: user.username,
+                role: user.role,
+            },
         };
     } catch (error) {
-        console.error('[LoginAttempt] Login error:', error);
+        console.error('[LoginAttempt] Unexpected error:', error);
         return {
             success: false,
             message: 'Terjadi kesalahan saat mencoba login.',
@@ -182,64 +172,74 @@ export async function loginAction(
 
 export async function logoutAction(): Promise<void> {
     noStore();
-    const currentUser = await getCurrentUserAction(); // Get user before deleting cookie for logging
-    cookies().delete(COOKIE_NAME);
-    if (currentUser) {
-        await _logActivity(currentUser, 'User logged out');
+
+    try {
+        const currentUser = await getCurrentUserAction(); // Dapatkan user sebelum cookie dihapus
+        const cookieStore = await cookies(); // HARUS menggunakan await di App Router
+
+        cookieStore.delete(COOKIE_NAME);
+
+        if (currentUser) {
+            await _logActivity(currentUser, 'User logged out');
+        }
+
+        console.log('[Logout] Logout berhasil, redirecting to /login');
+        redirect('/login');
+    } catch (error) {
+        console.error('[LogoutError] Terjadi kesalahan saat logout:', error);
+        redirect('/login'); // Tetap redirect meski ada error
     }
-    redirect('/login');
 }
 
 export async function getCurrentUserAction(): Promise<User | null> {
     noStore();
-    const cookieStore = cookies();
+
+    const cookieStore = await cookies(); // ⬅️ Harus pakai await di App Router
     const token = cookieStore.get(COOKIE_NAME)?.value;
 
     console.log(
         '[CurrentUserAction] Token from cookie:',
-        token ? 'Token found' : 'No token',
+        token ? '✅ Token found' : '❌ No token',
     );
 
-    if (!token) {
-        return null;
-    }
+    if (!token) return null;
+
     try {
         const { payload } = await jwtVerify(token, JWT_SECRET);
-        const session = payload as SessionPayload;
-        console.log('[CurrentUserAction] Session payload:', session);
+        const session = payload as unknown as SessionPayload;
 
-        const userIdAsNumber = Number(session.userId); // session.userId is number from payload
-        if (isNaN(userIdAsNumber)) {
+        console.log('[CurrentUserAction] Decoded session payload:', session);
+
+        const userId = Number(session.userId);
+        if (isNaN(userId)) {
             console.warn(
-                '[CurrentUserAction] Invalid userId in session (not a number):',
+                '[CurrentUserAction] Invalid userId in JWT payload:',
                 session.userId,
             );
-            // Do NOT delete cookie here
             return null;
         }
 
-        const userResult = await query<User>(
+        const result = await query<User>(
             'SELECT id, username, role, status, created_at, updated_at FROM users WHERE id = $1 AND status = $2',
-            [userIdAsNumber, 'active'],
+            [userId, 'active'],
         );
-        if (userResult.rows.length > 0) {
-            console.log(
-                '[CurrentUserAction] User found in DB:',
-                userResult.rows[0].username,
+
+        if (result.rows.length === 0) {
+            console.warn(
+                '[CurrentUserAction] No active user found in DB for ID:',
+                userId,
             );
-            return userResult.rows[0];
+            return null;
         }
-        console.log(
-            '[CurrentUserAction] User not found in DB for session ID or not active.',
-        );
-        // Do NOT delete cookie here
-        return null;
+
+        const user = result.rows[0];
+        console.log('[CurrentUserAction] Authenticated user:', user.username);
+        return user;
     } catch (error) {
         console.warn(
-            '[CurrentUserAction] Session token verification failed or DB error:',
+            '[CurrentUserAction] Failed to verify token or fetch user:',
             error,
         );
-        // Do NOT delete cookie here
         return null;
     }
 }
@@ -869,6 +869,7 @@ export async function changeUserPasswordAction(
     formData: ChangePasswordFormData,
 ): Promise<{ success: boolean; error?: string; username?: string }> {
     noStore();
+
     const performingAdmin = await getCurrentUserAction();
     if (!performingAdmin || performingAdmin.role !== 'admin') {
         return {
@@ -877,20 +878,29 @@ export async function changeUserPasswordAction(
         };
     }
 
+    if (!formData.password || formData.password.trim() === '') {
+        return {
+            success: false,
+            error: 'Kata sandi tidak boleh kosong.',
+        };
+    }
+
     try {
         const targetUserResult = await query<{ username: string }>(
             'SELECT username FROM users WHERE id = $1',
             [userId],
         );
+
         if (targetUserResult.rows.length === 0) {
             return {
                 success: false,
                 error: 'Pengguna target tidak ditemukan.',
             };
         }
+
         const targetUsername = targetUserResult.rows[0].username;
 
-        const newHashedPassword = bcryptjs.hashSync(
+        const newHashedPassword = await bcryptjs.hash(
             formData.password,
             BCRYPT_SALT_ROUNDS,
         );
@@ -900,27 +910,33 @@ export async function changeUserPasswordAction(
             [newHashedPassword, userId],
         );
 
-        if (result.rowCount !== null && result.rowCount > 0) {
+        const updatedRows = result?.rowCount ?? 0;
+        if (updatedRows > 0) {
             await _logActivity(
                 performingAdmin,
                 'Changed user password',
                 `Password changed for user: '${targetUsername}' (ID: ${userId})`,
             );
+
             revalidatePath('/admin/user-management');
+
             return { success: true, username: targetUsername };
         }
+
         return {
             success: false,
             error: 'Gagal mengubah kata sandi: Pengguna tidak ditemukan atau tidak ada perubahan.',
         };
     } catch (error) {
         console.error('Error changing user password:', error);
-        let errorMessage =
-            'Gagal mengubah kata sandi karena kesalahan database.';
-        if (error instanceof Error) {
-            errorMessage = `Gagal mengubah kata sandi: ${error.message}`;
-        }
-        return { success: false, error: errorMessage };
+
+        return {
+            success: false,
+            error:
+                error instanceof Error
+                    ? `Gagal mengubah kata sandi: ${error.message}`
+                    : 'Gagal mengubah kata sandi karena kesalahan tidak dikenal.',
+        };
     }
 }
 
@@ -928,6 +944,7 @@ export async function deleteUserAction(
     userId: number,
 ): Promise<{ success: boolean; error?: string; username?: string }> {
     noStore();
+
     const performingAdmin = await getCurrentUserAction();
     if (!performingAdmin || performingAdmin.role !== 'admin') {
         return {
@@ -945,15 +962,17 @@ export async function deleteUserAction(
 
     try {
         const targetUserResult = await query<User>(
-            'SELECT username, role, status FROM users WHERE id = $1',
+            'SELECT id, username, role, status FROM users WHERE id = $1',
             [userId],
         );
+
         if (targetUserResult.rows.length === 0) {
             return {
                 success: false,
                 error: 'Pengguna target tidak ditemukan.',
             };
         }
+
         const targetUser = targetUserResult.rows[0];
 
         if (targetUser.role === 'admin' && targetUser.status === 'active') {
@@ -961,7 +980,11 @@ export async function deleteUserAction(
                 'SELECT COUNT(*) FROM users WHERE role = $1 AND status = $2',
                 ['admin', 'active'],
             );
-            if (parseInt(adminCountResult.rows[0].count, 10) <= 1) {
+            const adminCount = parseInt(
+                adminCountResult.rows[0].count || '0',
+                10,
+            );
+            if (adminCount <= 1) {
                 return {
                     success: false,
                     error: 'Tidak dapat menghapus akun admin terakhir yang aktif.',
@@ -971,61 +994,77 @@ export async function deleteUserAction(
 
         const result = await query('DELETE FROM users WHERE id = $1', [userId]);
 
-        if (result.rowCount !== null && result.rowCount > 0) {
+        if (result.rowCount && result.rowCount > 0) {
             await _logActivity(
                 performingAdmin,
                 'Deleted user account',
                 `Deleted user: '${targetUser.username}' (ID: ${targetUser.id}), Role: '${targetUser.role}'`,
             );
-            revalidatePath('/admin/dashboard'); // For user count
+
+            revalidatePath('/admin/dashboard');
             revalidatePath('/admin/user-management');
+
             return { success: true, username: targetUser.username };
         }
+
         return {
             success: false,
-            error: 'Gagal menghapus pengguna: Pengguna tidak ditemukan atau tidak ada perubahan.',
+            error: 'Gagal menghapus pengguna: Tidak ada baris yang terpengaruh.',
         };
     } catch (error) {
         console.error('Error deleting user:', error);
-        let errorMessage =
-            'Gagal menghapus pengguna karena kesalahan database.';
-        if (error instanceof Error) {
-            errorMessage = `Gagal menghapus pengguna: ${error.message}`;
+
+        const pgError = error as any;
+        if (pgError?.code === '23503') {
+            return {
+                success: false,
+                error: 'Pengguna memiliki data terkait seperti log aktivitas. Hapus atau ubah data tersebut terlebih dahulu, atau ubah foreign key ke ON DELETE CASCADE.',
+            };
         }
-        if (
-            error instanceof Error &&
-            'code' in error &&
-            (error as any).code === '23503'
-        ) {
-            errorMessage =
-                'Gagal menghapus pengguna: Pengguna ini memiliki catatan terkait (mis., log aktivitas). Hapus atau perbarui catatan terkait terlebih dahulu atau konfigurasikan ON DELETE SET NULL/CASCADE pada foreign key.';
-        }
-        return { success: false, error: errorMessage };
+
+        return {
+            success: false,
+            error:
+                error instanceof Error
+                    ? `Gagal menghapus pengguna: ${error.message}`
+                    : 'Gagal menghapus pengguna karena kesalahan tak dikenal.',
+        };
     }
 }
 
 // --- Activity Log Actions ---
 export async function fetchActivityLogsAction(): Promise<ActivityLog[]> {
     noStore();
+
     const currentUser = await getCurrentUserAction();
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!currentUser) {
+        console.warn('[ActivityLog] Access denied: no session');
+        throw new Error('Anda belum login.');
+    }
+
+    if (currentUser.role !== 'admin') {
         console.warn(
-            'Attempt to fetch activity logs by non-admin or unauthenticated user.',
+            `[ActivityLog] Unauthorized access by user ${currentUser.username} (ID: ${currentUser.id})`,
         );
         throw new Error('Hanya admin yang dapat melihat log aktivitas.');
     }
 
     try {
         const result = await query<ActivityLog>(
-            'SELECT id, user_id, username_at_log_time, action, details, logged_at FROM activity_log ORDER BY logged_at DESC',
+            `SELECT id, user_id, username_at_log_time, action, details, logged_at 
+         FROM activity_log 
+         ORDER BY logged_at DESC`,
         );
+
+        console.log(`[ActivityLog] ${result.rows.length} log entries fetched.`);
         return result.rows;
     } catch (error) {
-        console.error('Error fetching activity logs:', error);
+        console.error('[ActivityLog] DB Error:', error);
+
         const dbError =
-            error instanceof Error ? error.message : 'Unknown database error';
+            error instanceof Error ? error.message : 'Unknown DB error';
         throw new Error(
-            `Gagal mengambil log aktivitas dari database. Penyebab: ${dbError}. Pastikan tabel 'activity_log' ada dan memiliki skema yang benar.`,
+            `Gagal mengambil log aktivitas. Periksa koneksi database atau skema tabel. Detail: ${dbError}`,
         );
     }
 }

@@ -238,7 +238,7 @@ export default function HomePage() {
                 )}
             </div>
             <footer className="bg-white text-black py-6 text-center text-sm w-full border-t border-gray-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
-                © {currentYear || ''} Stockpile. Hak cipta dilindungi.
+                © {currentYear || ''} IngsR. Ikhwan Ramadhan MIT LICENSE.
             </footer>
         </div>
     );

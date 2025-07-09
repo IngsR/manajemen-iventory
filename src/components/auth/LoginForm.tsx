@@ -66,12 +66,18 @@ export function LoginForm() {
 
     return (
         <Card className="shadow-xl">
-            <CardHeader>
-                <CardTitle className="text-xl">Masuk ke Akun Anda</CardTitle>
-                <CardDescription>
+            <CardHeader className="px-8 py-6">
+                <div className="flex justify-center mb-2">
+                    <CardTitle className="text-2xl font-semibold tracking-tight text-center">
+                        Login
+                    </CardTitle>
+                </div>
+
+                <CardDescription className="text-sm text-muted-foreground text-center">
                     Masukkan username dan password Anda di bawah ini.
                 </CardDescription>
             </CardHeader>
+
             <CardContent>
                 <Form {...form}>
                     <form
