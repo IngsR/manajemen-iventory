@@ -1,43 +1,23 @@
-# Stage 1: Build the Next.js application
-FROM node:20-alpine AS builder
+# Gunakan Node.js versi LTS berbasis Alpine (ringan)
+FROM node:18-alpine
 
-# Set working directory
+# Direktori kerja di dalam container
 WORKDIR /app
 
-# Copy package.json and package-lock.json (or yarn.lock) to leverage Docker cache
-COPY package.json package-lock.json ./
+# Salin package config terlebih dahulu (agar cache build optimal)
+COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --omit=dev --prefer-offline --no-progress --ignore-scripts
+RUN npm install
 
-# Copy the rest of your application code
+# Salin semua file project (termasuk src/, config, dll)
 COPY . .
 
-# Build the Next.js application
-# If you have specific environment variables needed for the build, you might need to pass them here
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Build aplikasi Next.js untuk production
 RUN npm run build
 
-# Stage 2: Run the Next.js application
-FROM node:20-alpine AS runner
-
-# Set working directory
-WORKDIR /app
-
-# Copy necessary files from the builder stage
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/public ./public
-# If you have a production .env file to copy
-COPY --from=builder /app/.env.production ./.env.production
-
-# Expose the port your Next.js app runs on
+# Expose port 3000 untuk diakses dari luar container
 EXPOSE 3000
 
-# Set environment variables for production (if not already handled by .env.production)
-# ENV NODE_ENV=production
-
-# Command to run the application
+# Jalankan Next.js app dalam mode production
 CMD ["npm", "start"]

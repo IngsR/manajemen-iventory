@@ -1,37 +1,29 @@
 version: '3.8'
 
 services:
-    # Next.js Application Service
     app:
-        build:
-            context: .
-            dockerfile: Dockerfile
+        build: .
+        container_name: manajemen_inventory_app
         ports:
             - '3000:3000'
         environment:
-            # Variabel lingkungan ini akan tersedia di dalam container 'app'
-            NODE_ENV: production
-            DATABASE_URL: postgresql://postgres:ikhwan123@db:5432/postgres
-
+            - DATABASE_URL=postgresql://postgres:ikhwan123@db:5432/postgres
+            - JWT_SECRET=46b3cbf6f4566492e79e548e12cc2837cbe23232b119feb42da1978cfdd9d61c
         depends_on:
-            - db # Memastikan service 'db' dimulai sebelum 'app'
-        volumes:
-            - app_node_modules:/app/node_modules # Named volume untuk mempertahankan node_modules
+            - db
 
-    # PostgreSQL Database Service
     db:
-        image: postgres:16-alpine # Menggunakan versi Alpine PostgreSQL yang ringan
+        image: postgres:15
+        container_name: manajemen_inventory_db
         restart: always
         environment:
-            # Variabel ini diperlukan oleh image PostgreSQL
-            POSTGRES_DB: postgres # Nama database Anda, sesuaikan dengan .env Anda
-            POSTGRES_USER: postgres # Nama pengguna database Anda, sesuaikan dengan .env Anda
-            POSTGRES_PASSWORD: ikhwan123 # Kata sandi database Anda (UBAH INI DI PRODUKSI!)
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ikhwan123
+            POSTGRES_DB: postgres
         ports:
-            - '5432:5432' # Mengekspos PostgreSQL ke mesin host Anda (opsional, tapi berguna untuk pengembangan lokal/tools)
+            - '5432:5432'
         volumes:
-            - db_data:/var/lib/postgresql/data # Mempertahankan data database
+            - pgdata:/var/lib/postgresql/data
 
 volumes:
-    db_data: # Mendefinisikan named volume untuk persistensi data PostgreSQL
-    app_node_modules: # Mendefinisikan named volume untuk node_modules (berguna untuk mencegah masalah host volume)
+    pgdata:
