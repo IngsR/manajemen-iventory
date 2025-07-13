@@ -17,7 +17,7 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-    title: 'InvManage - Inventory Management',
+    title: 'Ikhwan - Kelola Barang',
     description:
         'Modern inventory management with AI-powered restock suggestions.',
 };
