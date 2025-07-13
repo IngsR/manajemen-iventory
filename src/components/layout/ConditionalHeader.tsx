@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Header } from './Header';
 
 interface ConditionalHeaderProps {
     children: ReactNode;

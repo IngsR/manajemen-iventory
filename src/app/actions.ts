@@ -142,7 +142,7 @@ export async function loginAction(
 
         console.log('[LoginAttempt] JWT created:', token.slice(0, 25) + '...');
 
-        const cookieStore = await cookies(); // ✅ perbaikan penting!
+        const cookieStore = await cookies();
         cookieStore.set(COOKIE_NAME, token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

@@ -7,8 +7,8 @@ services:
         ports:
             - '3000:3000'
         environment:
-            - DATABASE_URL=${DATABASE_URL}
-            - JWT_SECRET=${JWT_SECRET}
+            - DATABASE_URL=postgresql://postgres:ikhwan123@db:5432/postgres
+            - JWT_SECRET=46b3cbf6f4566492e79e548e12cc2837cbe23232b119feb42da1978cfdd9d61c
         depends_on:
             - db
 

@@ -432,8 +432,8 @@ export default function StatisticsPage() {
                     </Button>
                 </div>
                 <footer className="bg-white text-black py-6 text-center text-sm w-full mt-auto border-t border-gray-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
-                    © {currentYear || new Date().getFullYear()} Stockpile. Hak
-                    cipta dilindungi.
+                    © {currentYear || new Date().getFullYear()} IngsR. Hak cipta
+                    dilindungi.
                 </footer>
             </div>
         );
