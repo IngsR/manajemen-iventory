@@ -1,5 +1,5 @@
 # 🧾 CRUD Manajemen Inventaris Barang
-## **Live Demo:** [begalung.vercel.app](https://begalung.vercel.app)
+## **Live Demo:** [kelola-barang.vercel.app](https://kelola-barang.vercel.app)
 
 Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Create, Read, Update, Delete). Proyek ini ditujukan untuk memudahkan pencatatan, pemantauan, dan pengelolaan stok serta kondisi barang di suatu organisasi atau perusahaan.
 
