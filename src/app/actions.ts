@@ -170,12 +170,12 @@ export async function loginAction(
     }
 }
 
-export async function logoutAction(): Promise<void> {
-    noStore();
+export async function logoutAction(): Promise<never> {
+    noStore(); // Pastikan ini tidak cache
 
     try {
-        const currentUser = await getCurrentUserAction(); // Dapatkan user sebelum cookie dihapus
-        const cookieStore = await cookies(); // HARUS menggunakan await di App Router
+        const currentUser = await getCurrentUserAction(); // Ambil user sebelum hapus cookie
+        const cookieStore = await cookies(); // Tanpa await karena headers/cookies sync di handler
 
         cookieStore.delete(COOKIE_NAME);
 
@@ -183,12 +183,13 @@ export async function logoutAction(): Promise<void> {
             await _logActivity(currentUser, 'User logged out');
         }
 
-        console.log('[Logout] Logout berhasil, redirecting to /login');
-        redirect('/login');
+        console.log('[Logout] Logout berhasil, redirecting...');
     } catch (error) {
-        console.error('[LogoutError] Terjadi kesalahan saat logout:', error);
-        redirect('/login'); // Tetap redirect meski ada error
+        console.error('[LogoutError] Gagal logout:', error);
     }
+
+    // Redirect SELALU dipanggil di luar try-catch (karena akan lempar)
+    redirect('/login'); // Ini akan melempar NEXT_REDIRECT
 }
 
 export async function getCurrentUserAction(): Promise<User | null> {
