@@ -339,7 +339,16 @@ export default function DefectiveItemsPage() {
                 )}
             </div>
             <footer className="bg-white text-black py-6 text-center text-sm w-full border-t border-gray-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
-                © {currentYear || ''} IngsR. Ikhwan Ramadhan MIT LICENSE.
+                © {currentYear || ''}{' '}
+                <a
+                    href="https://github.com/IngsR"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary font-medium hover:underline transition-colors"
+                >
+                    IngsR
+                </a>{' '}
+                · Ikhwan Ramadhan · MIT License
             </footer>
         </div>
     );

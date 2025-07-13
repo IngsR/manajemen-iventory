@@ -43,38 +43,23 @@ export default function ActivityLogPage() {
         setError(null);
         try {
             const fetchedLogs = await fetchActivityLogsAction();
-            if (mountedRef.current) {
-                setLogs(fetchedLogs);
-            }
+            if (mountedRef.current) setLogs(fetchedLogs);
         } catch (err) {
-            console.error('Error loading activity logs:', err);
-            let errorMessage = 'Tidak dapat mengambil log aktivitas.';
-            if (err instanceof Error) {
-                errorMessage = err.message;
-            } else if (typeof err === 'string') {
-                errorMessage = err;
-            } else if (
-                err &&
-                typeof err === 'object' &&
-                'message' in err &&
-                typeof (err as any).message === 'string'
-            ) {
-                errorMessage = (err as any).message;
-            }
-
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : 'Tidak dapat mengambil log aktivitas.';
             if (mountedRef.current) {
-                setError(errorMessage);
+                setError(message);
                 toast({
                     title: 'Kesalahan Memuat Log',
-                    description: errorMessage,
+                    description: message,
                     variant: 'destructive',
                 });
                 setLogs([]);
             }
         } finally {
-            if (mountedRef.current) {
-                setIsLoading(false);
-            }
+            if (mountedRef.current) setIsLoading(false);
         }
     }, [toast]);
 
@@ -83,9 +68,7 @@ export default function ActivityLogPage() {
     }, [loadLogs]);
 
     const escapeCSVField = (field: any): string => {
-        if (field === null || field === undefined) {
-            return '';
-        }
+        if (field === null || field === undefined) return '';
         let str = String(field);
         if (str.includes(',') || str.includes('\n') || str.includes('"')) {
             str = `"${str.replace(/"/g, '""')}"`;
@@ -105,24 +88,23 @@ export default function ActivityLogPage() {
 
         const headers = [
             'ID Log',
-            'Waktu (Lokal)',
+            'Waktu',
             'ID Pengguna',
-            'Username (Saat Log)',
+            'Username',
             'Aksi',
             'Detail',
         ];
-
         const csvRows = [
             headers.join(','),
             ...logs.map((log) =>
                 [
                     escapeCSVField(log.id),
                     escapeCSVField(
-                        format(new Date(log.logged_at), 'yyyy-MM-dd HH:mm:ss', {
+                        format(new Date(log.logged_at), 'dd MMM yy, HH:mm:ss', {
                             locale: IndonesianLocale,
                         }),
                     ),
-                    escapeCSVField(log.user_id === null ? '' : log.user_id),
+                    escapeCSVField(log.user_id),
                     escapeCSVField(log.username_at_log_time),
                     escapeCSVField(log.action),
                     escapeCSVField(log.details),
@@ -130,33 +112,18 @@ export default function ActivityLogPage() {
             ),
         ];
 
-        const csvString = csvRows.join('\n');
-        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-
-        const date = new Date();
-        const formattedDate = `${date.getFullYear()}-${String(
-            date.getMonth() + 1,
-        ).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const filename = `activity_log_${formattedDate}.csv`;
-
+        const blob = new Blob([csvRows.join('\n')], {
+            type: 'text/csv;charset=utf-8;',
+        });
+        const filename = `activity_log_${
+            new Date().toISOString().split('T')[0]
+        }.csv`;
         const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } else {
-            toast({
-                title: 'Error',
-                description:
-                    'Browser Anda tidak mendukung unduhan otomatis. Silakan coba browser lain.',
-                variant: 'destructive',
-            });
-        }
+        link.setAttribute('href', URL.createObjectURL(blob));
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
@@ -169,29 +136,28 @@ export default function ActivityLogPage() {
                             Log Aktivitas Karyawan
                         </CardTitle>
                         <CardDescription className="mt-1 text-muted-foreground">
-                            Pantau semua tindakan signifikan yang dilakukan oleh
-                            pengguna dalam sistem.
+                            Pantau semua tindakan signifikan dalam sistem.
                         </CardDescription>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <Button
                             onClick={loadLogs}
                             variant="outline"
                             disabled={isLoading}
-                            className="border-primary text-primary hover:bg-primary/5"
+                            className="w-full sm:w-auto"
                         >
                             <RefreshCw
                                 className={`mr-2 h-4 w-4 ${
                                     isLoading ? 'animate-spin' : ''
                                 }`}
                             />
-                            Muat Ulang Log
+                            Muat Ulang
                         </Button>
                         <Button
                             onClick={handleDownloadCSV}
-                            variant="outline" // Changed to outline to match refresh button
+                            variant="outline"
                             disabled={isLoading || logs.length === 0}
-                            className="border-primary text-primary hover:bg-primary/5" // Changed from accent to primary color scheme
+                            className="w-full sm:w-auto"
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Download CSV
@@ -199,20 +165,17 @@ export default function ActivityLogPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="mt-6">
-                    {isLoading && (
+                    {isLoading ? (
                         <div className="flex items-center justify-center py-10">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             <p className="ml-3 text-muted-foreground">
-                                Memuat log aktivitas...
+                                Memuat log...
                             </p>
                         </div>
-                    )}
-                    {!isLoading && error && (
-                        <div className="flex flex-col items-center justify-center py-10 text-destructive bg-destructive/10 p-4 rounded-md">
-                            <AlertTriangle className="h-8 w-8 mb-2" />
-                            <p className="font-semibold">
-                                Gagal Memuat Data Log
-                            </p>
+                    ) : error ? (
+                        <div className="text-center py-10 text-destructive">
+                            <AlertTriangle className="mx-auto h-8 w-8 mb-2" />
+                            <p className="font-semibold">Gagal Memuat Data</p>
                             <p className="text-sm">{error}</p>
                             <Button
                                 variant="outline"
@@ -222,8 +185,11 @@ export default function ActivityLogPage() {
                                 <RefreshCw className="mr-2 h-4 w-4" /> Coba Lagi
                             </Button>
                         </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <ActivityLogTable logs={logs} />
+                        </div>
                     )}
-                    {!isLoading && !error && <ActivityLogTable logs={logs} />}
                 </CardContent>
             </Card>
         </div>

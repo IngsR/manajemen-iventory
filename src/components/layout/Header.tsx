@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
     Home,
@@ -10,9 +13,57 @@ import {
 } from 'lucide-react';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 import { getCurrentUserAction, logoutAction } from '@/app/actions';
+import { useEffect, useState } from 'react';
 
-async function UserActions() {
-    const user = await getCurrentUserAction();
+function NavItem({
+    href,
+    icon: Icon,
+    label,
+}: {
+    href: string;
+    icon: React.ElementType;
+    label: string;
+}) {
+    const pathname = usePathname();
+    const active = pathname === href;
+
+    return (
+        <Link href={href} className="group relative">
+            <Button
+                variant="ghost"
+                className={`hover:bg-gray-100 dark:hover:bg-slate-800 px-2 sm:px-3 ${
+                    active ? 'border-b-2 border-black dark:border-white' : ''
+                }`}
+            >
+                <Icon className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50" />
+                <span className="hidden sm:inline text-black dark:text-slate-50">
+                    {label}
+                </span>
+            </Button>
+            <span
+                className={`absolute bottom-0 left-0 h-[2px] bg-black dark:bg-slate-50 transition-all duration-300 ease-out ${
+                    active ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}
+            ></span>
+        </Link>
+    );
+}
+
+function useUser() {
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        (async () => {
+            const u = await getCurrentUserAction();
+            setUser(u);
+        })();
+    }, []);
+
+    return user;
+}
+
+function UserActions() {
+    const user = useUser();
 
     if (user) {
         return (
@@ -22,19 +73,11 @@ async function UserActions() {
                     {user.role === 'admin' ? 'Admin' : 'Karyawan'})
                 </span>
                 {user.role === 'admin' && (
-                    <Link href="/admin/dashboard" className="group relative">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2"
-                        >
-                            <ShieldCheck className="h-5 w-5 sm:mr-1 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                            <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
-                                Dashboard
-                            </span>
-                        </Button>
-                        <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-slate-50 transition-all duration-300 ease-out group-hover:w-full"></span>
-                    </Link>
+                    <NavItem
+                        href="/admin/dashboard"
+                        icon={ShieldCheck}
+                        label="Dashboard"
+                    />
                 )}
                 <form action={logoutAction} className="group relative">
                     <Button
@@ -43,8 +86,8 @@ async function UserActions() {
                         type="submit"
                         className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2"
                     >
-                        <LogOut className="h-5 w-5 sm:mr-1 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                        <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
+                        <LogOut className="h-5 w-5 sm:mr-1 text-black dark:text-slate-50" />
+                        <span className="hidden sm:inline text-black dark:text-slate-50">
                             Logout
                         </span>
                     </Button>
@@ -53,14 +96,15 @@ async function UserActions() {
             </div>
         );
     }
+
     return (
         <Link href="/login" className="group relative">
             <Button
                 variant="ghost"
                 className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2 sm:px-3"
             >
-                <LogIn className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
+                <LogIn className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50" />
+                <span className="hidden sm:inline text-black dark:text-slate-50">
                     Login
                 </span>
             </Button>
@@ -69,8 +113,9 @@ async function UserActions() {
     );
 }
 
-export async function Header() {
-    const user = await getCurrentUserAction();
+export function Header() {
+    const user = useUser();
+    const pathname = usePathname();
 
     return (
         <header className="bg-white dark:bg-slate-900 shadow-md sticky top-0 z-40">
@@ -88,48 +133,17 @@ export async function Header() {
                     <nav className="flex items-center gap-1 sm:gap-2 mr-4">
                         {(!user || user.role !== 'admin') && (
                             <>
-                                <Link href="/" className="group relative">
-                                    <Button
-                                        variant="ghost"
-                                        className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2 sm:px-3"
-                                    >
-                                        <Home className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                                        <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
-                                            Beranda
-                                        </span>
-                                    </Button>
-                                    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-slate-50 transition-all duration-300 ease-out group-hover:w-full"></span>
-                                </Link>
-                                <Link
+                                <NavItem href="/" icon={Home} label="Beranda" />
+                                <NavItem
                                     href="/statistics"
-                                    className="group relative"
-                                >
-                                    <Button
-                                        variant="ghost"
-                                        className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2 sm:px-3"
-                                    >
-                                        <BarChart4 className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                                        <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
-                                            Statistik
-                                        </span>
-                                    </Button>
-                                    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-slate-50 transition-all duration-300 ease-out group-hover:w-full"></span>
-                                </Link>
-                                <Link
+                                    icon={BarChart4}
+                                    label="Statistik"
+                                />
+                                <NavItem
                                     href="/defective-items"
-                                    className="group relative"
-                                >
-                                    <Button
-                                        variant="ghost"
-                                        className="hover:bg-gray-100 dark:hover:bg-slate-800 px-2 sm:px-3"
-                                    >
-                                        <AlertTriangle className="h-5 w-5 sm:mr-2 text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50" />
-                                        <span className="hidden sm:inline text-black dark:text-slate-50 group-hover:text-black dark:group-hover:text-slate-50">
-                                            Barang Cacat
-                                        </span>
-                                    </Button>
-                                    <span className="absolute bottom-0 left-0 h-[2px] w-0 bg-black dark:bg-slate-50 transition-all duration-300 ease-out group-hover:w-full"></span>
-                                </Link>
+                                    icon={AlertTriangle}
+                                    label="Barang Cacat"
+                                />
                             </>
                         )}
                     </nav>

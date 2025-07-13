@@ -18,6 +18,7 @@ import type { InventoryItem, DefectiveItemLogEntry, User } from '@/lib/types';
 
 interface InteractiveSummaryCardProps {
     title: string;
+    color?: string;
     value: number | string;
     description: string;
     icon: React.ReactNode;

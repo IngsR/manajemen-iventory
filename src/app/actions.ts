@@ -56,11 +56,8 @@ async function _logActivity(
             'Activity Log: Failed to write to activity_log table:',
             dbError,
         );
-        // Important: Do not let logging failure break the main action.
     }
 }
-
-// --- Auth Actions ---
 
 interface LoginResult {
     success: boolean;
@@ -146,7 +143,7 @@ export async function loginAction(
         cookieStore.set(COOKIE_NAME, token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24, // 24 jam
+            maxAge: 60 * 60 * 24,
             path: '/',
         });
 
@@ -170,12 +167,12 @@ export async function loginAction(
     }
 }
 
-export async function logoutAction(): Promise<void> {
+export async function logoutAction(): Promise<never> {
     noStore();
 
     try {
-        const currentUser = await getCurrentUserAction(); // Dapatkan user sebelum cookie dihapus
-        const cookieStore = await cookies(); // HARUS menggunakan await di App Router
+        const currentUser = await getCurrentUserAction();
+        const cookieStore = await cookies();
 
         cookieStore.delete(COOKIE_NAME);
 
@@ -183,18 +180,18 @@ export async function logoutAction(): Promise<void> {
             await _logActivity(currentUser, 'User logged out');
         }
 
-        console.log('[Logout] Logout berhasil, redirecting to /login');
-        redirect('/login');
+        console.log('[Logout] Logout berhasil, redirecting...');
     } catch (error) {
-        console.error('[LogoutError] Terjadi kesalahan saat logout:', error);
-        redirect('/login'); // Tetap redirect meski ada error
+        console.error('[LogoutError] Gagal logout:', error);
     }
+
+    redirect('/login');
 }
 
 export async function getCurrentUserAction(): Promise<User | null> {
     noStore();
 
-    const cookieStore = await cookies(); // ⬅️ Harus pakai await di App Router
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
 
     console.log(
@@ -244,7 +241,6 @@ export async function getCurrentUserAction(): Promise<User | null> {
     }
 }
 
-// --- Inventory Item Actions ---
 export async function fetchInventoryItemsAction(): Promise<InventoryItem[]> {
     noStore();
     try {
@@ -381,9 +377,7 @@ export async function deleteItemFromDbAction(
         if (itemResult.rows.length > 0) {
             itemNameForLog = `'${itemResult.rows[0].name}' (ID: ${itemId})`;
         }
-    } catch (e) {
-        /* ignore */
-    }
+    } catch (e) {}
 
     try {
         const result = await query(
@@ -421,8 +415,6 @@ export async function deleteItemFromDbAction(
         return { success: false, error: errorMessage };
     }
 }
-
-// --- Defective Item Actions ---
 
 export async function logDefectiveItemAction(
     data: LogDefectiveItemFormData,
@@ -612,9 +604,7 @@ export async function deleteDefectiveItemLogAction(
         if (logResult.rows.length > 0) {
             logDescriptionForLog = `Defective log for item '${logResult.rows[0].item_name_at_log_time}' (Qty: ${logResult.rows[0].quantity_defective}, Log ID: ${logId})`;
         }
-    } catch (e) {
-        /* ignore */
-    }
+    } catch (e) {}
 
     try {
         const result = await query(
@@ -650,7 +640,6 @@ export async function deleteDefectiveItemLogAction(
     }
 }
 
-// --- User Management Actions ---
 export async function fetchUsersAction(): Promise<User[]> {
     noStore();
     try {
@@ -706,7 +695,7 @@ export async function createUserAction(
                 'Created user account',
                 `User: '${createdUser.username}' (ID: ${createdUser.id}), Role: '${createdUser.role}', Status: '${createdUser.status}'`,
             );
-            revalidatePath('/admin/dashboard'); // For user count
+            revalidatePath('/admin/dashboard');
             revalidatePath('/admin/user-management');
             return createdUser;
         }
@@ -771,7 +760,7 @@ export async function updateUserStatusAction(
                 'Updated user account status',
                 `User: '${updatedUser.username}' (ID: ${updatedUser.id}), Status changed from '${targetUserCurrent.status}' to '${updatedUser.status}'`,
             );
-            revalidatePath('/admin/dashboard'); // For user count
+            revalidatePath('/admin/dashboard');
             revalidatePath('/admin/user-management');
             return updatedUser;
         }
@@ -1032,7 +1021,6 @@ export async function deleteUserAction(
     }
 }
 
-// --- Activity Log Actions ---
 export async function fetchActivityLogsAction(): Promise<ActivityLog[]> {
     noStore();
 
