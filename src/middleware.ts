@@ -46,9 +46,6 @@ export async function middleware(request: NextRequest) {
 
     const isPublicPath = pathname === '/login';
     const isAdminPath = pathname.startsWith('/admin');
-    const isAppPath =
-        ['/', '/defective-items', '/statistics'].includes(pathname) ||
-        pathname.startsWith('/api/');
 
     if (isPublicPath) {
         if (session) {
