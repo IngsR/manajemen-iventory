@@ -10,7 +10,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import type { ActivityLog } from '@/lib/types';
-import { ArrowUpDown, Search, Eye } from 'lucide-react';
+import { ArrowUpDown, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { id as IndonesianLocale } from 'date-fns/locale';

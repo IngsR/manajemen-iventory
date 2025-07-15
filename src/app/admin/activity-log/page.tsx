@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import { ActivityLogTable } from '@/components/admin/ActivityLogTable';
 import type { ActivityLog } from '@/lib/types';
-import { fetchActivityLogsAction } from '@/app/actions';
+import { fetchActivityLogs } from '@/logic/log-act';
 import { useToast } from '@/hooks/use-toast';
 import {
     Activity,
@@ -42,7 +42,7 @@ export default function ActivityLogPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const fetchedLogs = await fetchActivityLogsAction();
+            const fetchedLogs = await fetchActivityLogs();
             if (mountedRef.current) setLogs(fetchedLogs);
         } catch (err) {
             const message =

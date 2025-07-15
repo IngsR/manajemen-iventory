@@ -8,12 +8,14 @@ import { AdjustQuantityDialog } from '@/components/inventory/AdjustQuantityDialo
 import type { InventoryItem, ItemFormData } from '@/lib/types';
 import { PlusCircle, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
 import {
     fetchInventoryItemsAction,
     addItemToDbAction,
     updateItemQuantityInDbAction,
     deleteItemFromDbAction,
-} from './actions';
+} from '@/logic/iventory';
+
 import {
     AlertDialog,
     AlertDialogAction,

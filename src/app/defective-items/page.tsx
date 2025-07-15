@@ -16,18 +16,18 @@ import {
     PackageSearch,
     AlertTriangle,
     Trash2,
-    Edit3,
     RefreshCw,
     Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+import { fetchInventoryItemsAction } from '@/logic/iventory';
 import {
-    fetchInventoryItemsAction,
     fetchDefectiveItemsLogAction,
     logDefectiveItemAction,
     deleteDefectiveItemLogAction,
     updateDefectiveItemStatusAction,
-} from '../actions';
+} from '@/logic/defective-items';
 import {
     AlertDialog,
     AlertDialogAction,

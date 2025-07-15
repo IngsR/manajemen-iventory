@@ -12,7 +12,8 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import { LogoIcon } from '@/components/icons/LogoIcon';
-import { getCurrentUserAction, logoutAction } from '@/app/actions';
+import { getCurrentUserAction } from '@/logic/user';
+import { logoutAction } from '@/logic/logout';
 import { useEffect, useState } from 'react';
 
 function NavItem({

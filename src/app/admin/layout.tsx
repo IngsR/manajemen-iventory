@@ -1,6 +1,6 @@
 'use client';
 
-import { getCurrentUserAction } from '@/app/actions';
+import { getCurrentUserAction } from '@/logic/user';
 import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
 

@@ -13,10 +13,8 @@ import { Button } from '@/components/ui/button';
 import ChartCard from '@/components/ui/ChartCard';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-    fetchInventoryItemsAction,
-    fetchDefectiveItemsLogAction,
-} from '@/app/actions';
+import { fetchInventoryItemsAction } from '@/logic/iventory';
+import { fetchDefectiveItemsLogAction } from '@/logic/defective-items';
 import type { InventoryItem, DefectiveItemLogEntry } from '@/lib/types';
 import { InteractiveSummaryCard } from '@/components/admin/InteractiveSummaryCard';
 

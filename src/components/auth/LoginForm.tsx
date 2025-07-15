@@ -13,7 +13,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { LoginFormSchema, type LoginFormSchemaType } from '@/lib/types';
-import { loginAction } from '@/app/actions';
+import { loginAction } from '@/logic/login';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';

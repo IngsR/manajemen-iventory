@@ -30,6 +30,7 @@ import {
     RefreshCw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrentUserAction } from '@/logic/user';
 import {
     fetchUsersAction,
     createUserAction,
@@ -37,8 +38,7 @@ import {
     changeUserPasswordAction,
     changeUsernameAction, // New import
     deleteUserAction,
-    getCurrentUserAction,
-} from '@/app/actions';
+} from '@/logic/user';
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState<User[]>([]);

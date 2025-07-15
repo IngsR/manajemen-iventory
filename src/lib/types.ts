@@ -19,6 +19,12 @@ export interface User {
     updated_at: string;
 }
 
+interface LoginResult {
+    success: boolean;
+    message: string;
+    user?: Pick<User, 'id' | 'username' | 'role'>;
+}
+
 export const LoginFormSchema = z.object({
     username: z.string().min(1, 'Username harus diisi'),
     password: z.string().min(1, 'Password harus diisi'),

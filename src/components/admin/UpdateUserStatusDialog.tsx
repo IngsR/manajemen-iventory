@@ -18,7 +18,7 @@ interface UpdateUserStatusDialogProps {
     user: User | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onUpdateStatus: (userId: string, newStatus: UserStatus) => Promise<void>;
+    onUpdateStatus: (userId: number, newStatus: UserStatus) => Promise<void>;
 }
 
 export function UpdateUserStatusDialog({
@@ -50,7 +50,7 @@ export function UpdateUserStatusDialog({
 
         setIsSubmitting(true);
         try {
-            await onUpdateStatus(String(user.id), newStatus); // ✅ FIXED
+            await onUpdateStatus(user.id, newStatus); // ✅ Perbaikan: kirimkan user.id sebagai number
         } finally {
             setIsSubmitting(false);
         }

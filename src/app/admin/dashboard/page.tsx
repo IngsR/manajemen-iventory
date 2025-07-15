@@ -1,9 +1,8 @@
-import {
-    getCurrentUserAction,
-    fetchInventoryItemsAction,
-    fetchDefectiveItemsLogAction,
-    fetchUsersAction,
-} from '@/app/actions';
+import { getCurrentUserAction } from '@/logic/user';
+import { fetchInventoryItemsAction } from '@/logic/iventory';
+import { fetchDefectiveItemsLogAction } from '@/logic/defective-items';
+import { fetchUsersAction } from '@/logic/user';
+
 import { redirect } from 'next/navigation';
 import {
     Card,
@@ -23,10 +22,10 @@ import {
     AlertTriangle as AlertTriangleIcon,
     UserCheck,
     Loader2,
-} from 'lucide-react'; // Renamed AlertTriangle to avoid conflict
+} from 'lucide-react';
 import type { InventoryItem, DefectiveItemLogEntry, User } from '@/lib/types';
 import dynamic from 'next/dynamic';
-import { InteractiveSummaryCard } from '@/components/admin/InteractiveSummaryCard'; // New import
+import { InteractiveSummaryCard } from '@/components/admin/InteractiveSummaryCard';
 
 const AdminChartsClient = dynamic(() => import('./AdminChartsClient'), {
     loading: () => (

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { getCurrentUserAction } from '@/app/actions';
+import { getCurrentUserAction } from '@/logic/user';
 import { LogoIcon } from '@/components/icons/LogoIcon';
 
 export default function LoginPage() {
