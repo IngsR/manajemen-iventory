@@ -248,7 +248,7 @@ async function initializeDatabase() {
     console.log('[DB] Database setup complete.');
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.CI) {
     initializeDatabase().catch((err) =>
         console.error('[DB Init] CRITICAL ERROR:', err),
     );
