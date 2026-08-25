@@ -8,7 +8,9 @@ yarn-error.log*
 .npm/
 .yarn/
 .pnpm/
-
+.agents/
+.claude/
+.windsurf
 # Logs
 logs/
 *.log
@@ -37,9 +39,17 @@ jspm_packages/
 .env.production
 .env.production.local
 .env.staging.local
+.env.*
+
+# Prisma
+/prisma/migrations/
+# Jika Anda menggunakan SQLite (tidak untuk kasus ini, tapi baik untuk berjaga-jaga)
+*.db
+*.db-journal
 
 # Local development server
 tmp/
+
 
 # macOS
 .DS_Store
@@ -49,3 +59,4 @@ Thumbs.db
 
 # Docker
 .dockerignore
+/src/generated/prisma

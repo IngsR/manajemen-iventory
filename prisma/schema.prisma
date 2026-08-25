@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  employee
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  username      String        @unique
+  password_hash String
+  role          UserRole
+  status        UserStatus    @default(active)
+  created_at    DateTime      @default(now()) @db.Timestamptz
+  updated_at    DateTime      @default(now()) @updatedAt @db.Timestamptz
+  activity_logs ActivityLog[]
+
+  @@map("users")
+}
+
+model InventoryItem {
+  id                   Int                @id @default(autoincrement())
+  name                 String
+  quantity             Int
+  category             String
+  location             String?
+  created_at           DateTime           @default(now()) @db.Timestamptz
+  updated_at           DateTime           @default(now()) @updatedAt @db.Timestamptz
+  defective_items_logs DefectiveItemLog[]
+
+  @@index([name])
+  @@index([category])
+  @@map("inventory_items")
+}
+
+model DefectiveItemLog {
+  id                   Int           @id @default(autoincrement())
+  inventory_item_id    Int?
+  inventory_item       InventoryItem? @relation(fields: [inventory_item_id], references: [id], onDelete: Cascade)
+  item_name_at_log_time String
+  quantity_defective   Int
+  reason               String
+  status               String        @default("Pending Review")
+  notes                String?
+  logged_at            DateTime      @default(now()) @db.Timestamptz
+  updated_at           DateTime      @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([inventory_item_id])
+  @@index([status])
+  @@map("defective_items_log")
+}
+
+model ActivityLog {
+  id                   Int      @id @default(autoincrement())
+  user_id              Int?
+  user                 User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  username_at_log_time String
+  action               String
+  details              String?
+  logged_at            DateTime @default(now()) @db.Timestamptz
+
+  @@index([user_id])
+  @@index([logged_at])
+  @@map("activity_log")
+}
