@@ -4,6 +4,8 @@ import { ObjectId } from 'mongodb';
 import { getCategoryCollection, CategoryDoc } from '@/models/CategoryModel';
 import { getItemCollection } from '@/models/ItemModel';
 import { revalidatePath } from 'next/cache';
+import { requirePermission, isAuthError } from '@/lib/Auth';
+import { createAuditLog } from '@/services/AuditLogService';
 
 export interface ActionResponse<T = unknown> {
     success: boolean;
@@ -34,6 +36,8 @@ export async function createCategoryAction(input: {
     description?: string;
 }): Promise<ActionResponse<string>> {
     try {
+        const user = await requirePermission('CATEGORY_CREATE');
+
         const code = input.code.trim().toUpperCase();
         const name = input.name.trim();
 
@@ -59,6 +63,17 @@ export async function createCategoryAction(input: {
         };
 
         const result = await collection.insertOne(doc);
+
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'CREATE',
+            resource: 'CATEGORY',
+            resourceId: result.insertedId.toHexString(),
+            details: { code, name },
+        });
+
         try { revalidatePath('/categories'); } catch {}
         return {
             success: true,
@@ -66,6 +81,7 @@ export async function createCategoryAction(input: {
             message: 'Kategori berhasil dibuat.',
         };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
@@ -79,6 +95,8 @@ export async function updateCategoryAction(
     }
 ): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('CATEGORY_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Kategori tidak valid.' };
         }
@@ -91,7 +109,28 @@ export async function updateCategoryAction(
         const collection = await getCategoryCollection();
         const objId = new ObjectId(id);
 
-        const result = await collection.updateOne(
+        const oldCategory = await collection.findOne({ _id: objId, isDeleted: false });
+        if (!oldCategory) {
+            return { success: false, error: 'Kategori tidak ditemukan atau sudah dihapus.' };
+        }
+
+        const before: Record<string, unknown> = {};
+        const after: Record<string, unknown> = {};
+
+        if (oldCategory.name !== name) {
+            before.name = oldCategory.name;
+            after.name = name;
+        }
+        if ((oldCategory.description || '') !== (input.description?.trim() || '')) {
+            before.description = oldCategory.description;
+            after.description = input.description?.trim();
+        }
+        if (oldCategory.status !== input.status) {
+            before.status = oldCategory.status;
+            after.status = input.status;
+        }
+
+        await collection.updateOne(
             { _id: objId, isDeleted: false },
             {
                 $set: {
@@ -103,19 +142,28 @@ export async function updateCategoryAction(
             }
         );
 
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Kategori tidak ditemukan atau sudah dihapus.' };
-        }
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'UPDATE',
+            resource: 'CATEGORY',
+            resourceId: id,
+            details: { before, after },
+        });
 
         try { revalidatePath('/categories'); } catch {}
         return { success: true, message: 'Kategori berhasil diperbarui.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
 export async function deleteCategoryAction(id: string): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('CATEGORY_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Kategori tidak valid.' };
         }
@@ -152,9 +200,19 @@ export async function deleteCategoryAction(id: string): Promise<ActionResponse> 
             return { success: false, error: 'Kategori tidak ditemukan.' };
         }
 
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'DELETE',
+            resource: 'CATEGORY',
+            resourceId: id,
+        });
+
         try { revalidatePath('/categories'); } catch {}
         return { success: true, message: 'Kategori berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }

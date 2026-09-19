@@ -6,6 +6,8 @@ import { getLocationCollection } from '@/models/LocationModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
+import { requirePermission, isAuthError } from '@/lib/Auth';
+import { createAuditLog } from '@/services/AuditLogService';
 
 export async function getWarehousesAction(): Promise<ActionResponse<WarehouseDoc[]>> {
     try {
@@ -28,6 +30,8 @@ export async function createWarehouseAction(input: {
     address?: string;
 }): Promise<ActionResponse<string>> {
     try {
+        const user = await requirePermission('WAREHOUSE_CREATE');
+
         const code = input.code.trim().toUpperCase();
         const name = input.name.trim();
 
@@ -53,6 +57,17 @@ export async function createWarehouseAction(input: {
         };
 
         const result = await collection.insertOne(doc);
+
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'CREATE',
+            resource: 'WAREHOUSE',
+            resourceId: result.insertedId.toHexString(),
+            details: { code, name },
+        });
+
         try { revalidatePath('/warehouses'); } catch {}
         return {
             success: true,
@@ -60,6 +75,7 @@ export async function createWarehouseAction(input: {
             message: 'Gudang berhasil dibuat.',
         };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
@@ -73,6 +89,8 @@ export async function updateWarehouseAction(
     }
 ): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('WAREHOUSE_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Gudang tidak valid.' };
         }
@@ -85,7 +103,28 @@ export async function updateWarehouseAction(
         const collection = await getWarehouseCollection();
         const objId = new ObjectId(id);
 
-        const result = await collection.updateOne(
+        const oldWarehouse = await collection.findOne({ _id: objId, isDeleted: false });
+        if (!oldWarehouse) {
+            return { success: false, error: 'Gudang tidak ditemukan.' };
+        }
+
+        const before: Record<string, unknown> = {};
+        const after: Record<string, unknown> = {};
+
+        if (oldWarehouse.name !== name) {
+            before.name = oldWarehouse.name;
+            after.name = name;
+        }
+        if ((oldWarehouse.address || '') !== (input.address?.trim() || '')) {
+            before.address = oldWarehouse.address;
+            after.address = input.address?.trim();
+        }
+        if (oldWarehouse.status !== input.status) {
+            before.status = oldWarehouse.status;
+            after.status = input.status;
+        }
+
+        await collection.updateOne(
             { _id: objId, isDeleted: false },
             {
                 $set: {
@@ -97,19 +136,28 @@ export async function updateWarehouseAction(
             }
         );
 
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Gudang tidak ditemukan.' };
-        }
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'UPDATE',
+            resource: 'WAREHOUSE',
+            resourceId: id,
+            details: { before, after },
+        });
 
         try { revalidatePath('/warehouses'); } catch {}
         return { success: true, message: 'Gudang berhasil diperbarui.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
 export async function deleteWarehouseAction(id: string): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('WAREHOUSE_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Gudang tidak valid.' };
         }
@@ -160,9 +208,19 @@ export async function deleteWarehouseAction(id: string): Promise<ActionResponse>
             return { success: false, error: 'Gudang tidak ditemukan.' };
         }
 
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'DELETE',
+            resource: 'WAREHOUSE',
+            resourceId: id,
+        });
+
         try { revalidatePath('/warehouses'); } catch {}
         return { success: true, message: 'Gudang berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }

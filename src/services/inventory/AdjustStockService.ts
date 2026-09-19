@@ -1,5 +1,6 @@
 import { generateMovementNumber } from '@/lib/AtomicCounter';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
+import { createAuditLog } from '@/services/AuditLogService';
 import { InventoryError } from './InventoryErrors';
 import { validateItem, validateLocation, validateQuantity } from './InventoryValidation';
 import { decrementBalance, incrementBalance, getCurrentBalance, withInventoryTransaction } from './InventoryStockHelper';
@@ -12,7 +13,7 @@ export interface AdjustStockInput {
     quantityDelta: number;
     reason: string; // Required for audit trail
     referenceNumber?: string;
-    actor: { name: string; role: string };
+    actor: { name: string; role: string; userId?: string | null };
 }
 
 export interface AdjustStockResult {
@@ -40,6 +41,7 @@ export async function adjustStock(input: AdjustStockInput): Promise<AdjustStockR
     const now = new Date();
     const itemOid = new ObjectId(itemId);
     const locationOid = new ObjectId(locationId);
+    const actorOid = actor.userId && ObjectId.isValid(actor.userId) ? new ObjectId(actor.userId) : null;
 
     const stockBefore = await getCurrentBalance(itemOid, locationOid);
     const absQty = Math.abs(quantityDelta);
@@ -78,11 +80,35 @@ export async function adjustStock(input: AdjustStockInput): Promise<AdjustStockR
                     : { sourceWarehouseId: location.warehouseId, sourceLocationId: locationOid }),
                 referenceNumber: referenceNumber || undefined,
                 reason: reason.trim(),
-                actor: { name: actor.name, role: actor.role, userId: null },
+                actor: { name: actor.name, role: actor.role, userId: actorOid },
                 timestamp: now,
                 createdAt: now,
             },
             session ? { session } : {}
+        );
+
+        // Atomic audit log
+        await createAuditLog(
+            {
+                actorId: actorOid,
+                actorName: actor.name,
+                actorRole: actor.role,
+                action: 'ADJUSTMENT',
+                resource: 'STOCK',
+                resourceId: movementNumber,
+                details: {
+                    itemId: itemOid.toHexString(),
+                    sku: item.sku,
+                    itemName: item.name,
+                    quantityDelta,
+                    direction: isPositive ? 'IN' : 'OUT',
+                    locationId: locationOid.toHexString(),
+                    referenceNumber,
+                    reason: reason.trim(),
+                },
+                timestamp: now,
+            },
+            session
         );
     });
 

@@ -5,6 +5,8 @@ import { getUnitCollection, UnitDoc } from '@/models/UnitModel';
 import { getItemCollection } from '@/models/ItemModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
+import { requirePermission, isAuthError } from '@/lib/Auth';
+import { createAuditLog } from '@/services/AuditLogService';
 
 export async function getUnitsAction(): Promise<ActionResponse<UnitDoc[]>> {
     try {
@@ -26,6 +28,8 @@ export async function createUnitAction(input: {
     name: string;
 }): Promise<ActionResponse<string>> {
     try {
+        const user = await requirePermission('UNIT_CREATE');
+
         const code = input.code.trim().toUpperCase();
         const name = input.name.trim();
 
@@ -50,6 +54,17 @@ export async function createUnitAction(input: {
         };
 
         const result = await collection.insertOne(doc);
+
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'CREATE',
+            resource: 'UNIT',
+            resourceId: result.insertedId.toHexString(),
+            details: { code, name },
+        });
+
         try { revalidatePath('/units'); } catch {}
         return {
             success: true,
@@ -57,6 +72,7 @@ export async function createUnitAction(input: {
             message: 'Satuan berhasil dibuat.',
         };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
@@ -69,6 +85,8 @@ export async function updateUnitAction(
     }
 ): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('UNIT_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Satuan tidak valid.' };
         }
@@ -81,7 +99,24 @@ export async function updateUnitAction(
         const collection = await getUnitCollection();
         const objId = new ObjectId(id);
 
-        const result = await collection.updateOne(
+        const oldUnit = await collection.findOne({ _id: objId, isDeleted: false });
+        if (!oldUnit) {
+            return { success: false, error: 'Satuan tidak ditemukan.' };
+        }
+
+        const before: Record<string, unknown> = {};
+        const after: Record<string, unknown> = {};
+
+        if (oldUnit.name !== name) {
+            before.name = oldUnit.name;
+            after.name = name;
+        }
+        if (oldUnit.status !== input.status) {
+            before.status = oldUnit.status;
+            after.status = input.status;
+        }
+
+        await collection.updateOne(
             { _id: objId, isDeleted: false },
             {
                 $set: {
@@ -92,19 +127,28 @@ export async function updateUnitAction(
             }
         );
 
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Satuan tidak ditemukan.' };
-        }
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'UPDATE',
+            resource: 'UNIT',
+            resourceId: id,
+            details: { before, after },
+        });
 
         try { revalidatePath('/units'); } catch {}
         return { success: true, message: 'Satuan berhasil diperbarui.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
 export async function deleteUnitAction(id: string): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('UNIT_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Satuan tidak valid.' };
         }
@@ -141,9 +185,19 @@ export async function deleteUnitAction(id: string): Promise<ActionResponse> {
             return { success: false, error: 'Satuan tidak ditemukan.' };
         }
 
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'DELETE',
+            resource: 'UNIT',
+            resourceId: id,
+        });
+
         try { revalidatePath('/units'); } catch {}
         return { success: true, message: 'Satuan berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }

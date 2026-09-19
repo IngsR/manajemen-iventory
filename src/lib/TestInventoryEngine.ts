@@ -125,6 +125,7 @@ async function cleanupFixtures() {
     await db.collection('categories').deleteOne({ code: 'CAT-TEST' });
     await db.collection('stock_balances').deleteMany({ itemId: fixtureItemId });
     await db.collection('stock_movements').deleteMany({ sku: 'SKU-TEST-001' });
+    await db.collection('audit_logs').deleteMany({ 'details.sku': 'SKU-TEST-001' });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (db.collection('_counters') as any).deleteOne({ _id: 'movement_seq' });
 }

@@ -8,6 +8,8 @@ import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
+import { requirePermission, isAuthError } from '@/lib/Auth';
+import { createAuditLog } from '@/services/AuditLogService';
 
 export interface PopulatedItem extends ItemDoc {
     categoryName?: string;
@@ -70,6 +72,8 @@ export async function createItemAction(input: {
     minStock?: number;
 }): Promise<ActionResponse<string>> {
     try {
+        const user = await requirePermission('ITEM_CREATE');
+
         const sku = input.sku.trim().toUpperCase();
         const name = input.name.trim();
 
@@ -117,6 +121,24 @@ export async function createItemAction(input: {
         };
 
         const result = await itemCollection.insertOne(doc);
+
+        // Audit log creation
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'CREATE',
+            resource: 'ITEM',
+            resourceId: result.insertedId.toHexString(),
+            details: {
+                sku,
+                name,
+                categoryId: input.categoryId,
+                unitId: input.unitId,
+                minStock: doc.minStock,
+            },
+        });
+
         try { revalidatePath('/items'); } catch {}
         return {
             success: true,
@@ -124,6 +146,9 @@ export async function createItemAction(input: {
             message: 'Barang berhasil dibuat.',
         };
     } catch (err) {
+        if (isAuthError(err)) {
+            return { success: false, error: err.message };
+        }
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
@@ -140,6 +165,8 @@ export async function updateItemAction(
     }
 ): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('ITEM_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Barang tidak valid.' };
         }
@@ -171,7 +198,42 @@ export async function updateItemAction(
         const itemCollection = await getItemCollection();
         const objId = new ObjectId(id);
 
-        const result = await itemCollection.updateOne(
+        const oldItem = await itemCollection.findOne({ _id: objId, isDeleted: false });
+        if (!oldItem) {
+            return { success: false, error: 'Barang tidak ditemukan.' };
+        }
+
+        // Calculate before/after only for changed fields
+        const before: Record<string, unknown> = {};
+        const after: Record<string, unknown> = {};
+
+        if (oldItem.name !== name) {
+            before.name = oldItem.name;
+            after.name = name;
+        }
+        if ((oldItem.description || '') !== (input.description?.trim() || '')) {
+            before.description = oldItem.description;
+            after.description = input.description?.trim();
+        }
+        if (oldItem.categoryId.toHexString() !== input.categoryId) {
+            before.categoryId = oldItem.categoryId.toHexString();
+            after.categoryId = input.categoryId;
+        }
+        if (oldItem.unitId.toHexString() !== input.unitId) {
+            before.unitId = oldItem.unitId.toHexString();
+            after.unitId = input.unitId;
+        }
+        const newMinStock = Math.max(0, Number(input.minStock) || 0);
+        if (oldItem.minStock !== newMinStock) {
+            before.minStock = oldItem.minStock;
+            after.minStock = newMinStock;
+        }
+        if (oldItem.status !== input.status) {
+            before.status = oldItem.status;
+            after.status = input.status;
+        }
+
+        await itemCollection.updateOne(
             { _id: objId, isDeleted: false },
             {
                 $set: {
@@ -179,26 +241,38 @@ export async function updateItemAction(
                     description: input.description?.trim(),
                     categoryId: categoryObjId,
                     unitId: unitObjId,
-                    minStock: Math.max(0, Number(input.minStock) || 0),
+                    minStock: newMinStock,
                     status: input.status,
                     updatedAt: new Date(),
                 },
             }
         );
 
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Barang tidak ditemukan.' };
-        }
+        // Audit update with before/after of changed fields
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'UPDATE',
+            resource: 'ITEM',
+            resourceId: id,
+            details: { before, after },
+        });
 
         try { revalidatePath('/items'); } catch {}
         return { success: true, message: 'Barang berhasil diperbarui.' };
     } catch (err) {
+        if (isAuthError(err)) {
+            return { success: false, error: err.message };
+        }
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
 export async function deleteItemAction(id: string): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('ITEM_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Barang tidak valid.' };
         }
@@ -234,6 +308,17 @@ export async function deleteItemAction(id: string): Promise<ActionResponse> {
                     },
                 }
             );
+
+            await createAuditLog({
+                actorId: user._id,
+                actorName: user.name,
+                actorRole: user.role,
+                action: 'UPDATE',
+                resource: 'ITEM',
+                resourceId: id,
+                details: { statusChange: 'INACTIVE (historical transactions exist)' },
+            });
+
             try { revalidatePath('/items'); } catch {}
             return {
                 success: true,
@@ -258,9 +343,21 @@ export async function deleteItemAction(id: string): Promise<ActionResponse> {
             return { success: false, error: 'Barang tidak ditemukan.' };
         }
 
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'DELETE',
+            resource: 'ITEM',
+            resourceId: id,
+        });
+
         try { revalidatePath('/items'); } catch {}
         return { success: true, message: 'Barang berhasil dihapus / dinonaktifkan.' };
     } catch (err) {
+        if (isAuthError(err)) {
+            return { success: false, error: err.message };
+        }
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
