@@ -6,24 +6,3 @@ services:
         container_name: manajemen_inventory_app
         ports:
             - '3000:3000'
-        environment:
-            - DATABASE_URL=postgresql://postgres:ikhwan123@db:5432/postgres
-            - JWT_SECRET=46b3cbf6f4566492e79e548e12cc2837cbe23232b119feb42da1978cfdd9d61c
-        depends_on:
-            - db
-
-    db:
-        image: postgres:15
-        container_name: manajemen_inventory_db
-        restart: always
-        environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: ikhwan123
-            POSTGRES_DB: postgres
-        ports:
-            - '5432:5432'
-        volumes:
-            - pgdata:/var/lib/postgresql/data
-
-volumes:
-    pgdata:
