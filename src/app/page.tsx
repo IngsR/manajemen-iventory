@@ -1,54 +1,108 @@
 import Link from 'next/link';
 
-export default function HomePage() {
-    const modules = [
-        {
-            title: 'Kategori (Category)',
-            description: 'Klasifikasi barang inventaris gudang',
-            href: '/categories',
-        },
-        {
-            title: 'Satuan (Unit)',
-            description: 'Standar satuan kuantitas barang (PCS, BOX, KG, dll)',
-            href: '/units',
-        },
-        {
-            title: 'Gudang (Warehouse)',
-            description: 'Fasilitas penyimpanan persediaan',
-            href: '/warehouses',
-        },
-        {
-            title: 'Lokasi (Location)',
-            description: 'Rak, bin, staging, dan zona fisik dalam gudang',
-            href: '/locations',
-        },
-        {
-            title: 'Barang & SKU (Item)',
-            description: 'Master data barang dan identitas SKU terdaftar',
-            href: '/items',
-        },
-    ];
+const masterDataModules = [
+    {
+        title: 'Kategori',
+        description: 'Klasifikasi barang inventaris gudang',
+        href: '/categories',
+    },
+    {
+        title: 'Satuan',
+        description: 'Standar satuan kuantitas barang (PCS, BOX, KG, dll)',
+        href: '/units',
+    },
+    {
+        title: 'Gudang',
+        description: 'Fasilitas penyimpanan persediaan',
+        href: '/warehouses',
+    },
+    {
+        title: 'Lokasi',
+        description: 'Rak, bin, staging, dan zona fisik dalam gudang',
+        href: '/locations',
+    },
+    {
+        title: 'Barang & SKU',
+        description: 'Master data barang dan identitas SKU terdaftar',
+        href: '/items',
+    },
+];
 
+const transactionModules = [
+    {
+        title: 'Receive',
+        description: 'Penerimaan barang masuk ke gudang',
+        href: '/inventory/receive',
+        color: 'text-green-700',
+    },
+    {
+        title: 'Issue',
+        description: 'Pengeluaran barang dari gudang',
+        href: '/inventory/issue',
+        color: 'text-orange-700',
+    },
+    {
+        title: 'Transfer',
+        description: 'Pemindahan barang antar lokasi dalam gudang',
+        href: '/inventory/transfer',
+        color: 'text-blue-700',
+    },
+    {
+        title: 'Return',
+        description: 'Pengembalian barang ke gudang',
+        href: '/inventory/return',
+        color: 'text-purple-700',
+    },
+    {
+        title: 'Adjustment',
+        description: 'Koreksi stok berdasarkan hasil opname atau audit',
+        href: '/inventory/adjustment',
+        color: 'text-amber-700',
+    },
+];
+
+export default function HomePage() {
     return (
         <main className="max-w-4xl mx-auto p-6">
-            <header className="border-b pb-4 mb-6">
+            <header className="border-b pb-4 mb-8">
                 <h1 className="text-2xl font-bold">Manajemen Persediaan Gudang</h1>
-                <p className="text-gray-600 mt-1">
-                    Fase 2: Domain Foundation &amp; Master Data Management
-                </p>
+                <p className="text-gray-500 mt-1 text-sm">Sistem inventory berbasis transaksi</p>
             </header>
 
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {modules.map((m) => (
-                    <Link
-                        key={m.href}
-                        href={m.href}
-                        className="block p-5 border rounded-lg hover:border-blue-500 hover:shadow-sm transition bg-white"
-                    >
-                        <h2 className="text-lg font-semibold text-blue-700">{m.title}</h2>
-                        <p className="text-sm text-gray-600 mt-2">{m.description}</p>
-                    </Link>
-                ))}
+            <section className="mb-8">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Master Data
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {masterDataModules.map((m) => (
+                        <Link
+                            key={m.href}
+                            href={m.href}
+                            className="block p-4 border rounded-lg hover:border-blue-400 hover:shadow-sm transition bg-white"
+                        >
+                            <h3 className="font-semibold text-blue-700">{m.title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{m.description}</p>
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            <section>
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    Transaksi Inventory
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {transactionModules.map((m) => (
+                        <Link
+                            key={m.href}
+                            href={m.href}
+                            className="block p-4 border rounded-lg hover:border-gray-400 hover:shadow-sm transition bg-white"
+                        >
+                            <h3 className={`font-semibold ${m.color}`}>{m.title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{m.description}</p>
+                        </Link>
+                    ))}
+                </div>
             </section>
         </main>
     );
