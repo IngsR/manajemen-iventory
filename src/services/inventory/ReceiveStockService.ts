@@ -1,5 +1,6 @@
 import { generateMovementNumber } from '@/lib/AtomicCounter';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
+import { createAuditLog } from '@/services/AuditLogService';
 import { InventoryError, isInventoryError } from './InventoryErrors';
 import { validateItem, validateLocation, validateQuantity } from './InventoryValidation';
 import { incrementBalance, getCurrentBalance, withInventoryTransaction } from './InventoryStockHelper';
@@ -11,7 +12,7 @@ export interface ReceiveStockInput {
     quantity: number;
     referenceNumber?: string;
     reason?: string;
-    actor: { name: string; role: string };
+    actor: { name: string; role: string; userId?: string | null };
 }
 
 export interface ReceiveStockResult {
@@ -36,6 +37,7 @@ export async function receiveStock(
     const now = new Date();
     const itemOid = new ObjectId(itemId);
     const locationOid = new ObjectId(locationId);
+    const actorOid = actor.userId && ObjectId.isValid(actor.userId) ? new ObjectId(actor.userId) : null;
 
     const stockBefore = await getCurrentBalance(itemOid, locationOid);
 
@@ -61,11 +63,35 @@ export async function receiveStock(
                 destinationLocationId: locationOid,
                 referenceNumber: referenceNumber || undefined,
                 reason: reason || undefined,
-                actor: { name: actor.name, role: actor.role, userId: null },
+                actor: { name: actor.name, role: actor.role, userId: actorOid },
                 timestamp: now,
                 createdAt: now,
             },
             session ? { session } : {}
+        );
+
+        // Atomic audit log
+        await createAuditLog(
+            {
+                actorId: actorOid,
+                actorName: actor.name,
+                actorRole: actor.role,
+                action: 'RECEIVE',
+                resource: 'STOCK',
+                resourceId: movementNumber,
+                details: {
+                    itemId: itemOid.toHexString(),
+                    sku: item.sku,
+                    itemName: item.name,
+                    quantity,
+                    destinationWarehouseId: location.warehouseId.toHexString(),
+                    destinationLocationId: locationOid.toHexString(),
+                    referenceNumber,
+                    reason,
+                },
+                timestamp: now,
+            },
+            session
         );
     });
 
@@ -77,3 +103,5 @@ export async function receiveStock(
         message: `Received ${quantity} unit(s) of ${item.name} at ${location.name}`,
     };
 }
+
+export { InventoryError, isInventoryError };

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { UserHeader } from './UserHeader';
 
 export const metadata: Metadata = {
     title: 'Manajemen Inventory',
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="id">
-            <body>{children}</body>
+            <body>
+                <UserHeader />
+                {children}
+            </body>
         </html>
     );
 }

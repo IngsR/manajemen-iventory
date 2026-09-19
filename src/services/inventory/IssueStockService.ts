@@ -1,5 +1,6 @@
 import { generateMovementNumber } from '@/lib/AtomicCounter';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
+import { createAuditLog } from '@/services/AuditLogService';
 import { InventoryError } from './InventoryErrors';
 import { validateItem, validateLocation, validateQuantity } from './InventoryValidation';
 import { decrementBalance, getCurrentBalance, withInventoryTransaction } from './InventoryStockHelper';
@@ -11,7 +12,7 @@ export interface IssueStockInput {
     quantity: number;
     referenceNumber?: string;
     reason?: string;
-    actor: { name: string; role: string };
+    actor: { name: string; role: string; userId?: string | null };
 }
 
 export interface IssueStockResult {
@@ -33,6 +34,7 @@ export async function issueStock(input: IssueStockInput): Promise<IssueStockResu
     const now = new Date();
     const itemOid = new ObjectId(itemId);
     const locationOid = new ObjectId(locationId);
+    const actorOid = actor.userId && ObjectId.isValid(actor.userId) ? new ObjectId(actor.userId) : null;
 
     const stockBefore = await getCurrentBalance(itemOid, locationOid);
 
@@ -57,11 +59,35 @@ export async function issueStock(input: IssueStockInput): Promise<IssueStockResu
                 sourceLocationId: locationOid,
                 referenceNumber: referenceNumber || undefined,
                 reason: reason || undefined,
-                actor: { name: actor.name, role: actor.role, userId: null },
+                actor: { name: actor.name, role: actor.role, userId: actorOid },
                 timestamp: now,
                 createdAt: now,
             },
             session ? { session } : {}
+        );
+
+        // Atomic audit log
+        await createAuditLog(
+            {
+                actorId: actorOid,
+                actorName: actor.name,
+                actorRole: actor.role,
+                action: 'ISSUE',
+                resource: 'STOCK',
+                resourceId: movementNumber,
+                details: {
+                    itemId: itemOid.toHexString(),
+                    sku: item.sku,
+                    itemName: item.name,
+                    quantity,
+                    sourceWarehouseId: location.warehouseId.toHexString(),
+                    sourceLocationId: locationOid.toHexString(),
+                    referenceNumber,
+                    reason,
+                },
+                timestamp: now,
+            },
+            session
         );
     });
 

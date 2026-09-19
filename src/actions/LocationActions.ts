@@ -6,6 +6,8 @@ import { getWarehouseCollection } from '@/models/WarehouseModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
+import { requirePermission, isAuthError } from '@/lib/Auth';
+import { createAuditLog } from '@/services/AuditLogService';
 
 export async function getLocationsAction(
     warehouseId?: string
@@ -37,6 +39,8 @@ export async function createLocationAction(input: {
     type: LocationType;
 }): Promise<ActionResponse<string>> {
     try {
+        const user = await requirePermission('LOCATION_CREATE');
+
         if (!ObjectId.isValid(input.warehouseId)) {
             return { success: false, error: 'Gudang tidak valid.' };
         }
@@ -86,6 +90,17 @@ export async function createLocationAction(input: {
         };
 
         const result = await locationCollection.insertOne(doc);
+
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'CREATE',
+            resource: 'LOCATION',
+            resourceId: result.insertedId.toHexString(),
+            details: { warehouseId: input.warehouseId, code, name, type: input.type },
+        });
+
         try { revalidatePath('/locations'); } catch {}
         return {
             success: true,
@@ -93,6 +108,7 @@ export async function createLocationAction(input: {
             message: 'Lokasi berhasil dibuat.',
         };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
@@ -106,6 +122,8 @@ export async function updateLocationAction(
     }
 ): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('LOCATION_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Lokasi tidak valid.' };
         }
@@ -118,7 +136,28 @@ export async function updateLocationAction(
         const collection = await getLocationCollection();
         const objId = new ObjectId(id);
 
-        const result = await collection.updateOne(
+        const oldLocation = await collection.findOne({ _id: objId, isDeleted: false });
+        if (!oldLocation) {
+            return { success: false, error: 'Lokasi tidak ditemukan.' };
+        }
+
+        const before: Record<string, unknown> = {};
+        const after: Record<string, unknown> = {};
+
+        if (oldLocation.name !== name) {
+            before.name = oldLocation.name;
+            after.name = name;
+        }
+        if (oldLocation.type !== input.type) {
+            before.type = oldLocation.type;
+            after.type = input.type;
+        }
+        if (oldLocation.status !== input.status) {
+            before.status = oldLocation.status;
+            after.status = input.status;
+        }
+
+        await collection.updateOne(
             { _id: objId, isDeleted: false },
             {
                 $set: {
@@ -130,19 +169,28 @@ export async function updateLocationAction(
             }
         );
 
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Lokasi tidak ditemukan.' };
-        }
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'UPDATE',
+            resource: 'LOCATION',
+            resourceId: id,
+            details: { before, after },
+        });
 
         try { revalidatePath('/locations'); } catch {}
         return { success: true, message: 'Lokasi berhasil diperbarui.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }
 
 export async function deleteLocationAction(id: string): Promise<ActionResponse> {
     try {
+        const user = await requirePermission('LOCATION_UPDATE');
+
         if (!ObjectId.isValid(id)) {
             return { success: false, error: 'ID Lokasi tidak valid.' };
         }
@@ -179,9 +227,19 @@ export async function deleteLocationAction(id: string): Promise<ActionResponse> 
             return { success: false, error: 'Lokasi tidak ditemukan.' };
         }
 
+        await createAuditLog({
+            actorId: user._id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'DELETE',
+            resource: 'LOCATION',
+            resourceId: id,
+        });
+
         try { revalidatePath('/locations'); } catch {}
         return { success: true, message: 'Lokasi berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message };
         return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
 }

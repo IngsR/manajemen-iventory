@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { getCurrentUser } from '@/lib/Auth';
+import { hasPermission } from '@/lib/Permissions';
 
 const masterDataModules = [
     {
@@ -61,12 +63,14 @@ const transactionModules = [
     },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+    const user = await getCurrentUser();
+
     return (
         <main className="max-w-4xl mx-auto p-6">
             <header className="border-b pb-4 mb-8">
                 <h1 className="text-2xl font-bold">Manajemen Persediaan Gudang</h1>
-                <p className="text-gray-500 mt-1 text-sm">Sistem inventory berbasis transaksi</p>
+                <p className="text-gray-500 mt-1 text-sm">Sistem inventory berbasis transaksi & immutable ledger</p>
             </header>
 
             <section className="mb-8">
@@ -87,7 +91,7 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <section>
+            <section className="mb-8">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
                     Transaksi Inventory
                 </h2>
@@ -104,6 +108,23 @@ export default function HomePage() {
                     ))}
                 </div>
             </section>
+
+            {(!user || hasPermission(user.role, 'AUDIT_VIEW')) && (
+                <section>
+                    <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        Audit & Pengawasan
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Link
+                            href="/audit"
+                            className="block p-4 border rounded-lg hover:border-purple-400 hover:shadow-sm transition bg-white"
+                        >
+                            <h3 className="font-semibold text-purple-700">Audit Trail (Log Aktivitas)</h3>
+                            <p className="text-sm text-gray-500 mt-1">Jejak rekaman aktivitas pengguna dan mutasi data (append-only)</p>
+                        </Link>
+                    </div>
+                </section>
+            )}
         </main>
     );
 }
