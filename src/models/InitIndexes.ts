@@ -7,6 +7,7 @@ import { initStockBalanceIndexes } from './StockBalanceModel';
 import { initStockMovementIndexes } from './StockMovementModel';
 import { initUserIndexes } from './UserModel';
 import { initAuditLogIndexes } from './AuditLogModel';
+import { initStockOpnameIndexes } from './StockOpnameModel';
 
 export async function initAllIndexes(): Promise<void> {
     console.log('Initializing MongoDB collections and indexes...');
@@ -19,6 +20,7 @@ export async function initAllIndexes(): Promise<void> {
     await initStockMovementIndexes();
     await initUserIndexes();
     await initAuditLogIndexes();
+    await initStockOpnameIndexes();
     console.log('All indexes initialized successfully.');
 }
 

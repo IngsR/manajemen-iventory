@@ -57,9 +57,15 @@ const transactionModules = [
     },
     {
         title: 'Adjustment',
-        description: 'Koreksi stok berdasarkan hasil opname atau audit',
+        description: 'Koreksi stok manual berdasarkan temuan atau audit',
         href: '/inventory/adjustment',
         color: 'text-amber-700',
+    },
+    {
+        title: 'Stock Opname',
+        description: 'Pencocokan fisik berkala & persetujuan Supervisor',
+        href: '/inventory/stock-opname',
+        color: 'text-teal-700',
     },
 ];
 

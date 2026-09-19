@@ -26,6 +26,11 @@ export async function UserHeader() {
                     <Link href="/" style={{ color: '#94a3b8', textDecoration: 'none' }}>
                         Dashboard
                     </Link>
+                    {user && hasPermission(user.role, 'STOCK_OPNAME_VIEW') && (
+                        <Link href="/inventory/stock-opname" style={{ color: '#94a3b8', textDecoration: 'none' }}>
+                            Stock Opname
+                        </Link>
+                    )}
                     {user && hasPermission(user.role, 'AUDIT_VIEW') && (
                         <Link href="/audit" style={{ color: '#94a3b8', textDecoration: 'none' }}>
                             Audit Trail
@@ -51,7 +56,13 @@ export async function UserHeader() {
                         }}>
                             {user.role}
                         </span>
-                        <form action={logoutAction} style={{ display: 'inline', margin: 0 }}>
+                        <form
+                            action={async () => {
+                                'use server';
+                                await logoutAction();
+                            }}
+                            style={{ display: 'inline', margin: 0 }}
+                        >
                             <button
                                 type="submit"
                                 style={{

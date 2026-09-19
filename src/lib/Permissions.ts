@@ -26,7 +26,12 @@ export type Permission =
     | 'TRANSFER_CREATE'
     | 'RETURN_CREATE'
     | 'ADJUSTMENT_CREATE'
-    | 'AUDIT_VIEW';
+    | 'AUDIT_VIEW'
+    | 'STOCK_OPNAME_VIEW'
+    | 'STOCK_OPNAME_CREATE'
+    | 'STOCK_OPNAME_SUBMIT'
+    | 'STOCK_OPNAME_APPROVE'
+    | 'STOCK_OPNAME_REJECT';
 
 const ALL_PERMISSIONS: Permission[] = [
     'ITEM_VIEW',
@@ -55,6 +60,11 @@ const ALL_PERMISSIONS: Permission[] = [
     'RETURN_CREATE',
     'ADJUSTMENT_CREATE',
     'AUDIT_VIEW',
+    'STOCK_OPNAME_VIEW',
+    'STOCK_OPNAME_CREATE',
+    'STOCK_OPNAME_SUBMIT',
+    'STOCK_OPNAME_APPROVE',
+    'STOCK_OPNAME_REJECT',
 ];
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -68,6 +78,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
         'INVENTORY_VIEW',
         'MOVEMENT_VIEW',
         'AUDIT_VIEW',
+        'STOCK_OPNAME_VIEW',
+        'STOCK_OPNAME_APPROVE',
+        'STOCK_OPNAME_REJECT',
     ],
     PETUGAS: [
         'ITEM_VIEW',
@@ -82,6 +95,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
         'TRANSFER_CREATE',
         'RETURN_CREATE',
         'ADJUSTMENT_CREATE',
+        'STOCK_OPNAME_VIEW',
+        'STOCK_OPNAME_CREATE',
+        'STOCK_OPNAME_SUBMIT',
     ],
 };
 

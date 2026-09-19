@@ -22,6 +22,7 @@ export type AuditResource =
     | 'LOCATION'
     | 'STOCK'
     | 'MOVEMENT'
+    | 'STOCK_OPNAME'
     | 'AUTH';
 
 export interface AuditLogDoc {
