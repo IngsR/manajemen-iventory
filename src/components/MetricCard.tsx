@@ -32,7 +32,7 @@ export function MetricCard({
     return (
         <div
             className={cn(
-                'glass-card rounded-2xl p-5 relative overflow-hidden group',
+                'glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden group',
                 className
             )}
         >
@@ -55,7 +55,7 @@ export function MetricCard({
 
             {/* Middle: Big Metric Value */}
             <div className="flex items-baseline justify-between pt-1">
-                <div className="text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+                <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
                     {value}
                 </div>
                 {badge && (

@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
     };
 
     return (
-        <div className="space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto">
             {/* Executive Hero Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-slate-200/60">
                 <div className="space-y-1">
@@ -71,7 +71,7 @@ export default async function AdminDashboardPage() {
                             Executive Overview
                         </span>
                     </div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                         Admin Control Desk
                     </h1>
                     <p className="text-sm text-slate-500">

@@ -45,7 +45,7 @@ export function FormCard({
                 {children}
             </CardContent>
             {footer && (
-                <CardFooter className="flex items-center justify-end gap-3 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50">
+                <CardFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 p-4 sm:p-5 border-t border-slate-100 bg-slate-50/50 [&>*]:w-full sm:[&>*]:w-auto">
                     {footer}
                 </CardFooter>
             )}
