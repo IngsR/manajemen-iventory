@@ -1,7 +1,9 @@
 # 🧾 CRUD Manajemen Inventaris Barang
+
 ## **Live Demo:** [kelola-barang.vercel.app](https://kelola-barang.vercel.app)
-**Demo Admin** username : **admin**   |   password : **admin123**
-**Demo Karyawan** username : **budi**    |   password : **budi123**
+
+**Demo Admin** username : **admin** | password : **admin123**
+**Demo Karyawan** username : **budi** | password : **budi123**
 
 Aplikasi berbasis web untuk mengelola inventaris barang dengan fitur CRUD (Create, Read, Update, Delete). Proyek ini ditujukan untuk memudahkan pencatatan, pemantauan, dan pengelolaan stok serta kondisi barang di suatu organisasi atau perusahaan.
 
@@ -134,12 +136,9 @@ npm start
     <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
   </a>
 
-  Proyek ini dilisensikan di bawah lisensi **MIT**.
-  Lihat file [LICENSE](./LICENSE) untuk informasi selengkapnya.
+Proyek ini dilisensikan di bawah lisensi **MIT**.
+Lihat file [LICENSE](./LICENSE) untuk informasi selengkapnya.
+
 </div>
 
 ## 👨‍💻 Author [IngsR](https://github.com/IngsR) Ikhwan Ramadhan-2025
-
-
-
-

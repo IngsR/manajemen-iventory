@@ -181,7 +181,7 @@ export default function LoginPage() {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 text-center">
                 Akses Cepat Mode Uji Coba (Dev Preset)
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {DEV_ACCOUNTS.map((account, index) => (
                   <button
                     key={account.label}
@@ -189,7 +189,7 @@ export default function LoginPage() {
                     disabled={isPending}
                     onClick={() => setPendingPreset(index)}
                     title={`${account.email} / ${account.password}`}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl border-slate-200 bg-white/80 hover:border-slate-300 hover:bg-slate-50 transition-all text-center shadow-sm disabled:opacity-50"
+                    className="flex flex-col items-center justify-center gap-0.5 p-2 rounded-xl border-slate-200 bg-white/80 hover:border-slate-300 hover:bg-slate-50 transition-all text-center shadow-sm disabled:opacity-50 min-h-[64px]"
                   >
                     <account.Icon className={`h-4 w-4 mb-1 ${account.iconClass}`} />
                     <span className="text-[11px] font-semibold text-slate-800 leading-tight">

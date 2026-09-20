@@ -38,10 +38,10 @@ export function PageHeader({
     };
 
     return (
-        <div className={cn('flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6', className)}>
+        <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6', className)}>
             <div className="space-y-1.5">
                 {breadcrumbs && breadcrumbs.length > 0 && (
-                    <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    <nav className="flex items-center flex-wrap gap-1.5 text-xs text-slate-400 mb-1">
                         {breadcrumbs.map((crumb, idx) => {
                             const isLast = idx === breadcrumbs.length - 1;
                             return (
@@ -67,7 +67,7 @@ export function PageHeader({
 
                 <div className="flex items-center gap-3">
                     {Icon && (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-slate-200/80 shadow-sm text-slate-800">
+                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-slate-200/80 shadow-sm text-slate-800">
                             <Icon className="h-5 w-5" />
                         </div>
                     )}
@@ -97,7 +97,7 @@ export function PageHeader({
             </div>
 
             {actions && (
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 gap-y-2 w-full sm:w-auto sm:shrink-0">
                     {actions}
                 </div>
             )}

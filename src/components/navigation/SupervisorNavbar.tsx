@@ -12,13 +12,30 @@ import {
     FileSpreadsheet,
     Eye,
     BookOpen,
+    type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/Utils';
 
-export function SupervisorNavbar() {
+interface NavItem {
+    label: string;
+    href: string;
+    icon: LucideIcon;
+    active: boolean;
+}
+
+interface NavSection {
+    title: string;
+    items: NavItem[];
+}
+
+interface SupervisorNavbarProps {
+    variant?: 'desktop' | 'mobile';
+}
+
+export function SupervisorNavbar({ variant = 'desktop' }: SupervisorNavbarProps) {
     const pathname = usePathname();
 
-    const sections = [
+    const sections: NavSection[] = [
         {
             title: 'Pusat Pengawasan',
             items: [
@@ -71,25 +88,32 @@ export function SupervisorNavbar() {
             ],
         },
         {
-            title: 'SOP & Edukasi',
+            title: 'Alur Kerja Saya',
             items: [
                 {
-                    label: 'Alur Kerja Sistem',
-                    href: '/workflow',
+                    label: 'Workflow Supervisor',
+                    href: '/workflow/supervisor',
                     icon: BookOpen,
-                    active: pathname === '/workflow',
+                    active: pathname.startsWith('/workflow'),
                 },
             ],
         },
     ];
 
     return (
-        <aside className="w-64 flex-shrink-0 glass-surface border-r border-slate-200/80 min-h-[calc(100vh-4.5rem)] flex flex-col justify-between p-4 z-20">
+        <aside
+            className={cn(
+                'glass-surface flex-col justify-between p-4 z-20',
+                variant === 'desktop'
+                    ? 'hidden lg:flex lg:w-64 flex-shrink-0 border-r border-slate-200/80 min-h-[calc(100vh-4rem)] sticky top-16 self-start'
+                    : 'flex w-full'
+            )}
+        >
             <div className="space-y-6">
                 {/* Role Workspace Badge */}
                 <div className="px-3 py-2 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4 text-amber-600" />
+                        <Eye className="h-4 w-4 text-amber-600 shrink-0" />
                         <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
                             Supervisor Desk
                         </span>
@@ -119,7 +143,7 @@ export function SupervisorNavbar() {
                                                 : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
                                         )}
                                     >
-                                        <Icon className={cn('h-4 w-4', item.active ? 'text-white' : 'text-slate-500')} />
+                                        <Icon className={cn('h-4 w-4 shrink-0', item.active ? 'text-white' : 'text-slate-500')} />
                                         <span>{item.label}</span>
                                     </Link>
                                 );
