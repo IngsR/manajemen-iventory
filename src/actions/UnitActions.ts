@@ -5,11 +5,12 @@ import { getUnitCollection, UnitDoc } from '@/models/UnitModel';
 import { getItemCollection } from '@/models/ItemModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
-import { requirePermission, isAuthError } from '@/lib/Auth';
+import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
 
 export async function getUnitsAction(): Promise<ActionResponse<UnitDoc[]>> {
     try {
+        await requireAuth();
         const collection = await getUnitCollection();
         const units = await collection
             .find({ isDeleted: false })
@@ -19,7 +20,9 @@ export async function getUnitsAction(): Promise<ActionResponse<UnitDoc[]>> {
         const serialized = JSON.parse(JSON.stringify(units));
         return { success: true, data: serialized };
     } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        if (isAuthError(err)) return { success: false, error: err.message };
+        console.error('[getUnitsAction error]', err);
+        return { success: false, error: 'Gagal memuat daftar satuan.' };
     }
 }
 
@@ -198,6 +201,7 @@ export async function deleteUnitAction(id: string): Promise<ActionResponse> {
         return { success: true, message: 'Satuan berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        console.error('[deleteUnitAction error]', err);
+        return { success: false, error: 'Gagal menghapus satuan.' };
     }
 }

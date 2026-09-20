@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { ObjectId } from 'mongodb';
 import { getUserCollection, UserDoc } from '@/models/UserModel';
 import { Permission, hasPermission } from './Permissions';
@@ -104,12 +105,18 @@ export async function setSessionCookie(token: string): Promise<void> {
 
 export async function clearSessionCookie(): Promise<void> {
     const cookieStore = await cookies();
+    try {
+        cookieStore.delete(SESSION_COOKIE_NAME);
+    } catch {
+        // Fallback for older Next / edge context
+    }
     cookieStore.set(SESSION_COOKIE_NAME, '', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge: 0,
+        expires: new Date(0),
     });
 }
 
@@ -161,6 +168,22 @@ export async function requirePermission(
             'FORBIDDEN',
             `Akses ditolak: Peran '${user.role}' tidak memiliki izin '${permission}'.`
         );
+    }
+    return user;
+}
+
+// ── Page-level Authorization (server boundary for RSC pages) ─────────────────
+// Enforces authentication + permission on the server for server-rendered pages.
+// Redirects (never renders protected content) to match the existing page-level
+// pattern of redirect('/login') / redirect('/').
+
+export async function requirePagePermission(permission: Permission): Promise<UserDoc> {
+    const user = await getCurrentUser();
+    if (!user) {
+        redirect('/login');
+    }
+    if (!hasPermission(user.role, permission)) {
+        redirect('/');
     }
     return user;
 }

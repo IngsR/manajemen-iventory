@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { UserHeader } from './UserHeader';
 
 export const metadata: Metadata = {
-    title: 'Manajemen Inventory',
-    description: 'Sistem Manajemen Persediaan Gudang',
+    title: 'StockFlow - Manajemen Inventory ERP',
+    description: 'Sistem Manajemen Persediaan Gudang Terpadu Berbasis Transaksi & Ledger',
 };
 
+// Root layout only provides the HTML shell.
+// Role-based workspace chrome (navbar/shell) now lives in each Route Group
+// layout: src/app/(admin)/layout.tsx, (supv), (office) and (auth).
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -14,8 +16,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="id">
-            <body>
-                <UserHeader />
+            <body className="antialiased selection:bg-slate-900 selection:text-white">
                 {children}
             </body>
         </html>

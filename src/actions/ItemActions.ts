@@ -8,7 +8,7 @@ import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
-import { requirePermission, isAuthError } from '@/lib/Auth';
+import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
 
 export interface PopulatedItem extends ItemDoc {
@@ -19,6 +19,7 @@ export interface PopulatedItem extends ItemDoc {
 
 export async function getItemsAction(): Promise<ActionResponse<PopulatedItem[]>> {
     try {
+        await requireAuth();
         const itemCollection = await getItemCollection();
         const items = await itemCollection
             .aggregate<PopulatedItem>([
@@ -59,7 +60,9 @@ export async function getItemsAction(): Promise<ActionResponse<PopulatedItem[]>>
         const serialized = JSON.parse(JSON.stringify(items));
         return { success: true, data: serialized };
     } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        if (isAuthError(err)) return { success: false, error: err.message };
+        console.error('[getItemsAction error]', err);
+        return { success: false, error: 'Gagal memuat katalog barang.' };
     }
 }
 
@@ -358,6 +361,7 @@ export async function deleteItemAction(id: string): Promise<ActionResponse> {
         if (isAuthError(err)) {
             return { success: false, error: err.message };
         }
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        console.error('[deleteItemAction error]', err);
+        return { success: false, error: 'Gagal menghapus barang. Terjadi kesalahan pada sistem.' };
     }
 }
