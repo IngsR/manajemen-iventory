@@ -38,4 +38,16 @@ export async function generateMovementNumber(): Promise<string> {
     return `MOV-${date}-${padded}`;
 }
 
+/**
+ * Generates a unique, concurrency-safe opname number.
+ * Format: OPN-YYYYMMDD-NNNNNN
+ */
+export async function generateOpnameNumber(): Promise<string> {
+    const seq = await getNextSequence('opname_seq');
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const padded = String(seq).padStart(6, '0');
+    return `OPN-${date}-${padded}`;
+}
+
 export { ObjectId };

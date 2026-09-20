@@ -14,19 +14,25 @@ export const SEED_USERS: SeedUserSpec[] = [
     {
         name: 'Administrator',
         email: 'admin@inventory.local',
-        plainPassword: 'admin123',
+        plainPassword: process.env.SEED_ADMIN_PASSWORD || 'admin123',
         role: 'ADMIN',
     },
     {
         name: 'Supervisor Gudang',
         email: 'supervisor@inventory.local',
-        plainPassword: 'supervisor123',
+        plainPassword: process.env.SEED_SUPERVISOR_PASSWORD || 'supervisor123',
         role: 'SUPERVISOR',
     },
     {
-        name: 'Petugas Operasional',
+        name: 'Petugas Inbound / Outbound',
         email: 'petugas@inventory.local',
-        plainPassword: 'petugas123',
+        plainPassword: process.env.SEED_PETUGAS_PASSWORD || 'petugas123',
+        role: 'PETUGAS',
+    },
+    {
+        name: 'Petugas Pelaksana Lapangan',
+        email: 'petugas2@inventory.local',
+        plainPassword: process.env.SEED_PETUGAS2_PASSWORD || 'petugas123',
         role: 'PETUGAS',
     },
 ];

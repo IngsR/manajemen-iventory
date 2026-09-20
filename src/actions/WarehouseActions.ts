@@ -6,11 +6,12 @@ import { getLocationCollection } from '@/models/LocationModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { revalidatePath } from 'next/cache';
 import { ActionResponse } from './CategoryActions';
-import { requirePermission, isAuthError } from '@/lib/Auth';
+import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
 
 export async function getWarehousesAction(): Promise<ActionResponse<WarehouseDoc[]>> {
     try {
+        await requireAuth();
         const collection = await getWarehouseCollection();
         const warehouses = await collection
             .find({ isDeleted: false })
@@ -20,7 +21,9 @@ export async function getWarehousesAction(): Promise<ActionResponse<WarehouseDoc
         const serialized = JSON.parse(JSON.stringify(warehouses));
         return { success: true, data: serialized };
     } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        if (isAuthError(err)) return { success: false, error: err.message };
+        console.error('[getWarehousesAction error]', err);
+        return { success: false, error: 'Gagal memuat daftar gudang.' };
     }
 }
 
@@ -221,6 +224,7 @@ export async function deleteWarehouseAction(id: string): Promise<ActionResponse>
         return { success: true, message: 'Gudang berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        console.error('[deleteWarehouseAction error]', err);
+        return { success: false, error: 'Gagal menghapus gudang.' };
     }
 }

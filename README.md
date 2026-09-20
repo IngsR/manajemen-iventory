@@ -140,33 +140,6 @@ npm start
 
 ## 👨‍💻 Author [IngsR](https://github.com/IngsR) Ikhwan Ramadhan-2025
 
-## </div>
 
 
 
-```
-manajemen-iventory
-├─ components.json
-├─ docker-compose.yml
-├─ dockerfile
-├─ LICENSE
-├─ next-env.d.ts
-├─ next.config.ts
-├─ package-lock.json
-├─ package.json
-├─ postcss.config.mjs
-├─ README.md
-├─ skills-lock.json
-├─ src
-│  ├─ app
-│  │  ├─ favicon.ico
-│  │  ├─ globals.css
-│  │  ├─ layout.tsx
-│  │  └─ page.tsx
-│  └─ lib
-│     ├─ MongoDb.ts
-│     └─ TestMongoConnection.ts
-├─ tailwind.config.ts
-└─ tsconfig.json
-
-```

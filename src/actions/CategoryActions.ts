@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import { getCategoryCollection, CategoryDoc } from '@/models/CategoryModel';
 import { getItemCollection } from '@/models/ItemModel';
 import { revalidatePath } from 'next/cache';
-import { requirePermission, isAuthError } from '@/lib/Auth';
+import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
 
 export interface ActionResponse<T = unknown> {
@@ -16,6 +16,7 @@ export interface ActionResponse<T = unknown> {
 
 export async function getCategoriesAction(): Promise<ActionResponse<CategoryDoc[]>> {
     try {
+        await requireAuth();
         const collection = await getCategoryCollection();
         const categories = await collection
             .find({ isDeleted: false })
@@ -26,7 +27,9 @@ export async function getCategoriesAction(): Promise<ActionResponse<CategoryDoc[
         const serialized = JSON.parse(JSON.stringify(categories));
         return { success: true, data: serialized };
     } catch (err) {
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        if (isAuthError(err)) return { success: false, error: err.message };
+        console.error('[getCategoriesAction error]', err);
+        return { success: false, error: 'Gagal memuat daftar kategori.' };
     }
 }
 
@@ -213,6 +216,7 @@ export async function deleteCategoryAction(id: string): Promise<ActionResponse> 
         return { success: true, message: 'Kategori berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+        console.error('[deleteCategoryAction error]', err);
+        return { success: false, error: 'Gagal menghapus kategori.' };
     }
 }
