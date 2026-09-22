@@ -7,6 +7,7 @@ import {
     getRecentMovements,
 } from '@/services/reporting/DashboardService';
 import { MetricCard } from '@/components/MetricCard';
+import { QuickTransactionTerminal } from '@/components/inventory/quick-transaction-terminal';
 import { Button } from '@/components/ui/button';
 import {
     ArrowDownToLine,
@@ -137,6 +138,9 @@ export default async function PetugasDashboardPage() {
                     variant="default"
                 />
             </div>
+
+            {/* Integrated Fast Transaction Terminal */}
+            <QuickTransactionTerminal />
 
             {/* Tactile Operational Action Center */}
             <div className="space-y-4">

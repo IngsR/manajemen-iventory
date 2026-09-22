@@ -11,6 +11,7 @@ import { ObjectId, Filter } from 'mongodb';
 import { getStockMovementCollection, StockMovementDoc, MovementType } from '@/models/StockMovementModel';
 import { getStockOpnameCollection, StockOpnameDoc, StockOpnameStatus } from '@/models/StockOpnameModel';
 import { getStockOpnameItemCollection } from '@/models/StockOpnameModel';
+import { getWarehouseCollection } from '@/models/WarehouseModel';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ export interface OpnameReportRow {
     _id: string;
     opnameNumber: string;
     warehouseId: string;
+    warehouseName?: string;
     status: StockOpnameStatus;
     createdByName: string;
     reviewedByName?: string;
@@ -65,6 +67,7 @@ export interface OpnameReportRow {
     submittedAt?: Date;
     reviewedAt?: Date;
     itemCount: number;
+    totalVariance: number;
 }
 
 // ── Movement Report ──────────────────────────────────────────────────────────
@@ -186,27 +189,43 @@ export async function getOpnameReport(
             .toArray(),
     ]);
 
-    // Get item counts per opname
+    // Get item counts and variance per opname
     const opnameIds = docs.map((d) => d._id);
-    const itemCounts = await itemCol.aggregate<{ _id: ObjectId; count: number }>([
+    const itemStats = await itemCol.aggregate<{ _id: ObjectId; count: number; totalVariance: number }>([
         { $match: { stockOpnameId: { $in: opnameIds } } },
-        { $group: { _id: '$stockOpnameId', count: { $sum: 1 } } },
+        {
+            $group: {
+                _id: '$stockOpnameId',
+                count: { $sum: 1 },
+                totalVariance: { $sum: { $abs: '$difference' } },
+            },
+        },
     ]).toArray();
 
-    const countMap = new Map(itemCounts.map((ic) => [String(ic._id), ic.count]));
+    const statsMap = new Map(itemStats.map((ic) => [String(ic._id), { count: ic.count, totalVariance: ic.totalVariance ?? 0 }]));
 
-    const data: OpnameReportRow[] = docs.map((d) => ({
-        _id: String(d._id),
-        opnameNumber: d.opnameNumber,
-        warehouseId: String(d.warehouseId),
-        status: d.status,
-        createdByName: d.createdBy?.name ?? '-',
-        reviewedByName: d.reviewedBy?.name,
-        createdAt: d.createdAt,
-        submittedAt: d.submittedAt,
-        reviewedAt: d.reviewedAt,
-        itemCount: countMap.get(String(d._id)) ?? 0,
-    }));
+    const warehouseCol = await getWarehouseCollection();
+    const warehouseIds = Array.from(new Set(docs.map((d) => d.warehouseId)));
+    const warehouses = await warehouseCol.find({ _id: { $in: warehouseIds } }).toArray();
+    const whMap = new Map(warehouses.map((w) => [w._id.toHexString(), w.name]));
+
+    const data: OpnameReportRow[] = docs.map((d) => {
+        const stats = statsMap.get(String(d._id)) ?? { count: 0, totalVariance: 0 };
+        return {
+            _id: String(d._id),
+            opnameNumber: d.opnameNumber,
+            warehouseId: String(d.warehouseId),
+            warehouseName: whMap.get(d.warehouseId.toHexString()) ?? 'Gudang',
+            status: d.status,
+            createdByName: d.createdBy?.name ?? '-',
+            reviewedByName: d.reviewedBy?.name,
+            createdAt: d.createdAt,
+            submittedAt: d.submittedAt,
+            reviewedAt: d.reviewedAt,
+            itemCount: stats.count,
+            totalVariance: stats.totalVariance,
+        };
+    });
 
     return {
         data,

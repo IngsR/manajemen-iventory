@@ -16,6 +16,7 @@ import {
     FileSpreadsheet,
     ShieldCheck,
     BookOpen,
+    Users,
     type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/Utils';
@@ -48,6 +49,12 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
                     href: '/dashboard/admin',
                     icon: LayoutDashboard,
                     active: pathname === '/dashboard/admin' || pathname === '/',
+                },
+                {
+                    label: 'Manajemen Pengguna',
+                    href: '/users',
+                    icon: Users,
+                    active: pathname.startsWith('/users'),
                 },
             ],
         },

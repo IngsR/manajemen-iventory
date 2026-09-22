@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/Auth';
 import { hasPermission } from '@/lib/Permissions';
 import { getStockOpnames } from '@/services/inventory/StockOpnameService';
+import { approveStockOpnameAction } from '@/actions/StockOpnameActions';
 import { getWarehouseCollection } from '@/models/WarehouseModel';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
@@ -28,6 +29,7 @@ import {
     ArrowLeft,
     Clock,
     User,
+    Check,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -194,16 +196,36 @@ export default async function StockOpnameListPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Link href={`/inventory/stock-opname/${op._id.toHexString()}`}>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 px-2.5 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
-                                            >
-                                                Buka Detail
-                                                <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                                            </Button>
-                                        </Link>
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            {op.status === 'SUBMITTED' && hasPermission(user.role, 'STOCK_OPNAME_APPROVE') && (
+                                                <form
+                                                    action={async () => {
+                                                        'use server';
+                                                        await approveStockOpnameAction(op._id.toHexString());
+                                                    }}
+                                                >
+                                                    <Button
+                                                        type="submit"
+                                                        size="sm"
+                                                        className="h-7 px-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs"
+                                                        title="Setujui Dokumen Opname"
+                                                    >
+                                                        <Check className="h-3 w-3 mr-1" />
+                                                        Setujui
+                                                    </Button>
+                                                </form>
+                                            )}
+                                            <Link href={`/inventory/stock-opname/${op._id.toHexString()}`}>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 px-2 text-xs text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                                                >
+                                                    Buka
+                                                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                                </Button>
+                                            </Link>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             );

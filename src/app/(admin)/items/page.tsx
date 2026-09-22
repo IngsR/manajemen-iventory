@@ -37,6 +37,7 @@ import {
     CheckCircle2,
     AlertCircle,
     Layers,
+    Sparkles,
 } from 'lucide-react';
 
 interface OptionItem {
@@ -61,6 +62,13 @@ export default function ItemsPage() {
     const [unitId, setUnitId] = useState('');
     const [minStock, setMinStock] = useState('0');
     const [submitting, setSubmitting] = useState(false);
+
+    function handleGenerateSku() {
+        const cat = categories.find((c) => c._id === categoryId);
+        const prefix = cat ? cat.code.toUpperCase() : 'SKU';
+        const rand = Math.floor(100 + Math.random() * 900);
+        setSku(`${prefix}-${rand}`);
+    }
 
     // Edit state
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -216,7 +224,17 @@ export default function ItemsPage() {
             >
                 <form id="create-item-form" onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="space-y-1.5">
-                        <Label htmlFor="item-sku">SKU Unik *</Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="item-sku">SKU Unik *</Label>
+                            <button
+                                type="button"
+                                onClick={handleGenerateSku}
+                                className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1 font-medium"
+                                title="Buat kode SKU otomatis berdasarkan kategori"
+                            >
+                                <Sparkles className="h-3 w-3" /> Auto SKU
+                            </button>
+                        </div>
                         <Input
                             id="item-sku"
                             value={sku}

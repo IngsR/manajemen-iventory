@@ -11,6 +11,8 @@ import {
     submitStockOpnameAction,
     approveStockOpnameAction,
     rejectStockOpnameAction,
+    setAllOpnameItemsMatchedAction,
+    populateStockOpnameAction,
 } from '@/actions/StockOpnameActions';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
@@ -45,6 +47,8 @@ import {
     AlertCircle,
     Check,
     X,
+    CheckCheck,
+    RotateCcw,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -140,22 +144,62 @@ export default async function StockOpnameDetailPage({ params }: PageProps) {
                     { label: opname.opnameNumber },
                 ]}
                 actions={
-                    canSubmit ? (
-                        <form
-                            action={async () => {
-                                'use server';
-                                await submitStockOpnameAction(opname._id.toHexString());
-                            }}
-                        >
-                            <Button
-                                type="submit"
-                                className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 rounded-xl shadow-sm"
+                    <div className="flex flex-wrap items-center gap-2">
+                        {canEdit && opname.items.length > 0 && (
+                            <form
+                                action={async () => {
+                                    'use server';
+                                    await setAllOpnameItemsMatchedAction(opname._id.toHexString());
+                                }}
                             >
-                                <Send className="h-3.5 w-3.5 mr-1.5" />
-                                Ajukan untuk Review Supervisor
-                            </Button>
-                        </form>
-                    ) : undefined
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs h-9 rounded-xl shadow-xs"
+                                    title="Set seluruh hitung fisik sama dengan saldo sistem (0 selisih)"
+                                >
+                                    <CheckCheck className="h-3.5 w-3.5 mr-1.5" />
+                                    Set Semua Sesuai Fisik (0 Selisih)
+                                </Button>
+                            </form>
+                        )}
+
+                        {canEdit && (
+                            <form
+                                action={async () => {
+                                    'use server';
+                                    await populateStockOpnameAction(opname._id.toHexString());
+                                }}
+                            >
+                                <Button
+                                    type="submit"
+                                    variant="ghost"
+                                    className="text-slate-600 hover:bg-slate-100 text-xs h-9 rounded-xl"
+                                    title="Muat ulang snapshot stok dari database"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                                    Muat Snapshot
+                                </Button>
+                            </form>
+                        )}
+
+                        {canSubmit && (
+                            <form
+                                action={async () => {
+                                    'use server';
+                                    await submitStockOpnameAction(opname._id.toHexString());
+                                }}
+                            >
+                                <Button
+                                    type="submit"
+                                    className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-9 rounded-xl shadow-sm"
+                                >
+                                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                                    Ajukan ke Supervisor
+                                </Button>
+                            </form>
+                        )}
+                    </div>
                 }
             />
 

@@ -11,6 +11,7 @@ import {
 import { getOpnameReport } from '@/services/reporting/InventoryReportService';
 import { MetricCard } from '@/components/MetricCard';
 import { Button } from '@/components/ui/button';
+import { approveStockOpnameAction } from '@/actions/StockOpnameActions';
 import {
     Boxes,
     AlertTriangle,
@@ -21,6 +22,7 @@ import {
     Activity,
     ShieldAlert,
     Eye,
+    Check,
 } from 'lucide-react';
 
 export default async function SupervisorDashboardPage() {
@@ -141,19 +143,25 @@ export default async function SupervisorDashboardPage() {
                             <thead>
                                 <tr className="border-b border-amber-200/40 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                                     <th className="pb-2.5">Nomor Opname</th>
+                                    <th className="pb-2.5">Fasilitas Gudang</th>
                                     <th className="pb-2.5">Dibuat Oleh</th>
                                     <th className="pb-2.5">Waktu Submit</th>
-                                    <th className="pb-2.5 text-center">Jumlah Item</th>
-                                    <th className="pb-2.5 text-right">Keputusan</th>
+                                    <th className="pb-2.5 text-center">Status Selisih</th>
+                                    <th className="pb-2.5 text-right">Keputusan Cepat</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-amber-100/80">
                                 {pendingApprovals.data.map((op) => (
                                     <tr key={op._id} className="hover:bg-amber-50/40 transition-colors">
-                                        <td className="py-3 font-mono font-bold text-slate-800">
-                                            {op.opnameNumber}
+                                        <td className="py-3 font-mono font-bold text-slate-900">
+                                            <Link href={`/inventory/stock-opname/${op._id}`} className="hover:underline text-amber-900">
+                                                {op.opnameNumber}
+                                            </Link>
                                         </td>
-                                        <td className="py-3 text-slate-700 font-medium">{op.createdByName}</td>
+                                        <td className="py-3 text-slate-700 font-medium">
+                                            {op.warehouseName || 'Gudang'}
+                                        </td>
+                                        <td className="py-3 text-slate-600">{op.createdByName}</td>
                                         <td className="py-3 text-slate-500">
                                             {op.submittedAt
                                                 ? new Date(op.submittedAt).toLocaleDateString('id-ID', {
@@ -165,15 +173,41 @@ export default async function SupervisorDashboardPage() {
                                                   })
                                                 : '-'}
                                         </td>
-                                        <td className="py-3 text-center font-bold text-slate-800">
-                                            {op.itemCount}
+                                        <td className="py-3 text-center">
+                                            {op.totalVariance === 0 ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    ✓ Cocok (0 Selisih)
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                                    ⚠ {op.totalVariance} Selisih
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="py-3 text-right">
-                                            <Link href="/inventory/stock-opname">
-                                                <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm">
-                                                    Review & Putuskan
-                                                </Button>
-                                            </Link>
+                                            <div className="inline-flex items-center gap-1.5">
+                                                <form
+                                                    action={async () => {
+                                                        'use server';
+                                                        await approveStockOpnameAction(op._id);
+                                                    }}
+                                                >
+                                                    <Button
+                                                        type="submit"
+                                                        size="sm"
+                                                        className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs font-bold"
+                                                        title="1-Klik Setujui Dokumen dan Sesuaikan Saldo Stok"
+                                                    >
+                                                        <Check className="h-3 w-3 mr-1" />
+                                                        Setujui (1-Klik)
+                                                    </Button>
+                                                </form>
+                                                <Link href={`/inventory/stock-opname/${op._id}`}>
+                                                    <Button variant="outline" size="sm" className="h-7 text-xs border-amber-200 text-amber-800 hover:bg-amber-100/60 rounded-lg">
+                                                        Detail
+                                                    </Button>
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

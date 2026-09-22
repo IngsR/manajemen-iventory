@@ -20,6 +20,7 @@ import {
     Hash,
     Layers,
     FileText,
+    Sparkles,
 } from 'lucide-react';
 
 export default function ReceivePage() {
@@ -29,6 +30,13 @@ export default function ReceivePage() {
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<ReceiveStockResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [refNumber, setRefNumber] = useState('');
+
+    function handleGenerateRef() {
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        setRefNumber(`RCV-${dateStr}-${rand}`);
+    }
 
     useEffect(() => {
         Promise.all([getItemsAction(), getLocationsAction()]).then(([itemRes, locRes]) => {
@@ -169,13 +177,24 @@ export default function ReceivePage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="rcv-ref">Nomor Dokumen Referensi</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="rcv-ref">Nomor Dokumen Referensi</Label>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateRef}
+                                    className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1 font-medium"
+                                >
+                                    <Sparkles className="h-3 w-3" /> Auto No. Ref
+                                </button>
+                            </div>
                             <Input
                                 id="rcv-ref"
                                 name="referenceNumber"
                                 type="text"
+                                value={refNumber}
+                                onChange={(e) => setRefNumber(e.target.value)}
                                 placeholder="PO-2026-001, SJ-991, dll"
-                                className="text-xs h-9 rounded-xl"
+                                className="text-xs h-9 rounded-xl font-mono"
                             />
                         </div>
                     </div>
