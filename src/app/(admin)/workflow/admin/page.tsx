@@ -11,30 +11,28 @@ import { MetricCard } from "@/components/MetricCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Layers,
-  Tags,
-  Ruler,
+  ShieldCheck,
+  ShieldX,
   Package,
   Warehouse,
   MapPin,
+  Tags,
+  Ruler,
   SlidersHorizontal,
-  Users,
+  ArrowRight,
   ShieldAlert,
+  Layers,
+  Activity,
   ScrollText,
   FileSpreadsheet,
-  ShieldCheck,
-  ShieldX,
-  ArrowRight,
-  ArrowDown,
-  Activity,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Alur Kerja Administrator - StockFlow ERP",
+  title: "Alur Tata Kelola Admin - StockFlow ERP",
   description:
-    "Alur tata kelola sistem: master data, konfigurasi, audit, dan pengecualian oleh Administrator",
+    "Alur tata kelola sistem, manajemen master data, konfigurasi gudang, dan audit trail oleh Administrator",
 };
 
 export default async function AdminWorkflowPage() {
@@ -43,7 +41,7 @@ export default async function AdminWorkflowPage() {
     redirect("/login");
   }
 
-  if (!hasPermission(user.role, "ITEM_CREATE")) {
+  if (user.role !== "ADMIN") {
     redirect("/");
   }
 
@@ -52,70 +50,42 @@ export default async function AdminWorkflowPage() {
     getRecentMovements(5),
   ]);
 
-  // Admin governance flow — build & maintain the foundation of the system.
-  const stages = [
+  const steps = [
     {
       step: "01",
-      stage: "MASTER DATA",
-      title: "Siapkan Kategori & Satuan",
-      icon: Tags,
-      accent: "bg-indigo-50 text-indigo-700 border-indigo-200/70",
-      desc: "Definisikan klasifikasi produk dan satuan ukuran sebagai dasar seluruh katalog barang.",
+      title: "Klasifikasi Produk & Satuan",
+      desc: "Tentukan kategori barang dan satuan ukuran resmi (PCS, BOX, UNIT) sebagai standar katalog.",
       href: "/categories",
-      cta: "Kategori Produk",
-      secondary: { label: "Satuan Ukuran", href: "/units" },
+      cta: "Kelola Kategori",
+      icon: Tags,
+      color: "text-indigo-700 bg-indigo-50 border-indigo-200",
     },
     {
       step: "02",
-      stage: "ITEM & SKU",
-      title: "Daftarkan Barang & Minimum Stock",
-      icon: Package,
-      accent: "bg-blue-50 text-blue-700 border-blue-200/70",
-      desc: "Buat katalog barang/SKU aktif dan tetapkan batas minimum stock untuk pemicu peringatan stok kritis.",
+      title: "Katalog SKU & Batas Minimum",
+      desc: "Daftarkan kode SKU barang baru dan tetapkan batas minimum stock sebagai acuan peringatan dini.",
       href: "/items",
-      cta: "Katalog Barang & SKU",
+      cta: "Katalog Barang",
+      icon: Package,
+      color: "text-blue-700 bg-blue-50 border-blue-200",
     },
     {
       step: "03",
-      stage: "WAREHOUSE & LOCATION",
-      title: "Bangun Fasilitas & Rak",
-      icon: Warehouse,
-      accent: "bg-teal-50 text-teal-700 border-teal-200/70",
-      desc: "Siapkan gudang, zona, dan rak lokasi tempat Petugas melakukan putaway serta opname.",
+      title: "Fasilitas Gudang & Lokasi Rak",
+      desc: "Bangun struktur gudang fisik dan kodefikasi rak lokasi tempat penataan stok barang.",
       href: "/warehouses",
-      cta: "Fasilitas Gudang",
-      secondary: { label: "Zona & Rak Lokasi", href: "/locations" },
+      cta: "Kelola Gudang",
+      icon: Warehouse,
+      color: "text-teal-700 bg-teal-50 border-teal-200",
     },
     {
       step: "04",
-      stage: "SYSTEM CONTROL",
-      title: "Konfigurasi Akun & Otorisasi",
-      icon: Users,
-      accent: "bg-purple-50 text-purple-700 border-purple-200/70",
-      desc: "Kelola user dan hak akses (RBAC) agar Petugas dan Supervisor bekerja sesuai perannya.",
+      title: "Audit Trail & Pengawasan",
+      desc: "Pantau riwayat audit log seluruh aktivitas user dan buku besar mutasi untuk kepatuhan sistem.",
       href: "/audit",
-      cta: "Tinjau Otorisasi",
-    },
-    {
-      step: "05",
-      stage: "AUDIT & HISTORY",
-      title: "Pantau Histori & Audit Trail",
+      cta: "Buka Audit Log",
       icon: ShieldAlert,
-      accent: "bg-slate-100 text-slate-700 border-slate-200/70",
-      desc: "Periksa audit trail keamanan, riwayat mutasi, dan rekapitulasi opname sebagai bentuk tata kelola.",
-      href: "/audit",
-      cta: "Audit Trail",
-      secondary: { label: "Log Mutasi", href: "/reports/movements" },
-    },
-    {
-      step: "06",
-      stage: "EXCEPTION / ADJUSTMENT",
-      title: "Koreksi Darurat Terotorisasi",
-      icon: SlidersHorizontal,
-      accent: "bg-amber-50 text-amber-700 border-amber-200/70",
-      desc: "Jalankan Adjustment pengecualian (barang rusak/susut) hanya dengan alasan tertulis, sesuai otorisasi.",
-      href: "/inventory/adjustment",
-      cta: "Koreksi Persediaan",
+      color: "text-slate-700 bg-slate-100 border-slate-200",
     },
   ];
 
@@ -128,224 +98,139 @@ export default async function AdminWorkflowPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-16 animate-fade-in">
-      {/* Hero: governance identity */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 text-white p-5 sm:p-8 md:p-10 shadow-2xl border-indigo-900/60">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-800/60 border-indigo-700/70 text-xs font-semibold text-indigo-100">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            ADMINISTRATOR • TATA KELOLA SISTEM
-          </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
+      {/* ── 1. Hero Summary (High Contrast & Clear Typography) ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-semibold text-blue-800">
+          <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+          ADMINISTRATOR • TATA KELOLA & KONFIGURASI
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-snug">
             Alur Tata Kelola & Konfigurasi Sistem
           </h1>
-          <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-            Anda{" "}
-            <strong className="text-white">
-              menyiapkan dan menjaga fondasi sistem
-            </strong>{" "}
-            agar Petugas dan Supervisor dapat bekerja. Anda bukan operator
-            gudang — pekerjaan rutin Receive/Issue/Transfer dilakukan oleh
-            Petugas.
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-3xl">
+            Anda adalah <strong className="text-slate-900 font-semibold">pengelola fondasi sistem</strong>. Anda memastikan seluruh master data gudang, kategori, satuan, barang (SKU), dan audit trail terkonfigurasi dengan tepat agar Petugas dan Supervisor dapat beroperasi secara akurat.
           </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border-white/15">
-              Peran saya: Penjaga fondasi & kebijakan sistem
-            </span>
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border-white/15">
-              Output saya dipakai Petugas & Supervisor
-            </span>
-          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5 pt-3 border-t border-slate-100">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+            Peran saya: Penjaga fondasi & tata kelola master data
+          </span>
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200/80">
+            Master data siap → dipakai Petugas & Supervisor
+          </span>
         </div>
       </div>
 
-      {/* Responsibility & limitation summary */}
+      {/* ── 2. Tanggung Jawab & Batasan (Executive Overview) ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="glass-card rounded-2xl p-5 border-emerald-200/70">
-          <div className="flex items-center gap-2 mb-3">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Tanggung Jawab Saya
-            </h3>
+        <div className="bg-white rounded-2xl p-6 border border-blue-200/80 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-blue-800">
+            <ShieldCheck className="h-5 w-5 text-blue-600" />
+            <h2 className="text-sm font-bold text-slate-900">
+              Tanggung Jawab Utama
+            </h2>
           </div>
-          <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-5">
-            <li>
-              Mengelola master data: Kategori, Satuan, Barang/SKU, Gudang, dan
-              Lokasi.
-            </li>
-            <li>
-              Menetapkan batas minimum stock sebagai kebijakan peringatan.
-            </li>
-            <li>Menjaga konfigurasi akun dan otorisasi peran pengguna.</li>
-            <li>Menjaga integritas audit trail dan histori transaksi.</li>
+          <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
+            <li>Mengelola data master: Kategori, Satuan, Barang (SKU), Gudang, dan Rak Lokasi.</li>
+            <li>Menetapkan ambang batas minimum persediaan sebagai pemicu peringatan dini.</li>
+            <li>Mengatur akun pengguna dan hak akses operasional (Role-Based Access Control).</li>
+            <li>Memantau audit trail untuk memastikan kepatuhan dan integritas sistem.</li>
           </ul>
         </div>
-        <div className="glass-card rounded-2xl p-5 border-rose-200/70">
-          <div className="flex items-center gap-2 mb-3">
-            <ShieldX className="h-4 w-4 text-rose-600" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Bukan Tugas Saya
-            </h3>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-slate-700">
+            <ShieldX className="h-5 w-5 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-900">
+              Bukan Tugas Admin
+            </h2>
           </div>
-          <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-5">
-            <li>
-              Melakukan alur operasional rutin Receive / Issue / Transfer /
-              Return.
-            </li>
-            <li>Menyetujui Stock Opname — itu wewenang Supervisor.</li>
-            <li>
-              Mengubah saldo stok langsung di luar dokumen transaksi resmi.
-            </li>
-            <li>Mengedit atau menghapus log audit (bersifat immutable).</li>
+          <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
+            <li>Bukan operator fisik harian di lantai gudang (tugas Petugas).</li>
+            <li>Tidak melakukan verifikasi dan approval Stock Opname fisik (tugas Supervisor).</li>
+            <li>Tidak mengubah saldo barang tanpa catatan mutasi atau dokumen resmi.</li>
           </ul>
         </div>
       </div>
 
-      {/* Main flow: vertical governance pipeline */}
+      {/* ── 3. Alur Tahapan Ringkas (Sequential Step Cards) ── */}
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-indigo-600 rounded-full" />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              Alur Tata Kelola Saya
-            </h2>
-            <p className="text-xs text-slate-500">
-              Dari menyiapkan master data sampai menjaga audit dan pengecualian.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Tahapan Tata Kelola
+          </h2>
+          <p className="text-xs text-slate-500">
+            Urutan penyiapan struktur sistem untuk mendukung operasional gudang.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-500">
-          <span className="font-mono">MASTER DATA</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">ITEM &amp; SKU</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">WAREHOUSE &amp; LOCATION</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">SYSTEM CONTROL</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">AUDIT &amp; HISTORY</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono text-amber-600">EXCEPTION</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {stages.map((s, idx) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {steps.map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.step}
-                className="glass-card rounded-2xl p-5 flex-col gap-3 border-slate-200/80"
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all gap-4"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
-                    {s.step}
-                  </span>
-                  <div
-                    className={`p-2 rounded-xl border shadow-sm ${s.accent}`}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white">
+                      {s.step}
+                    </span>
+                    <div className={`p-2 rounded-xl border ${s.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {s.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+
+                <Link href={s.href} className="pt-2">
+                  <Button
+                    size="sm"
+                    className="w-full h-8 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white"
                   >
-                    <Icon className="h-4 w-4" />
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400">
-                    {s.stage}
-                  </span>
-                  <h3 className="text-sm font-bold text-slate-900 leading-tight mt-0.5">
-                    {s.title}
-                  </h3>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  {s.desc}
-                </p>
-                <div className="mt-auto pt-1 space-y-1.5">
-                  <Link href={s.href}>
-                    <Button
-                      size="sm"
-                      className="w-full h-8 text-[11px] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                      {s.cta}
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
-                  {s.secondary && (
-                    <Link href={s.secondary.href}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full h-7 text-[11px] rounded-xl border-slate-200/80"
-                      >
-                        {s.secondary.label}
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-                {idx === stages.length - 1 && (
-                  <div className="flex items-center gap-2 pt-1 text-[10px] text-amber-700 font-semibold">
-                    <ShieldAlert className="h-3 w-3" />
-                    Hanya dengan otorisasi & alasan tertulis
-                  </div>
-                )}
+                    {s.cta}
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
             );
           })}
         </div>
-
-        {/* Foundation relationship: how admin output enables the other roles */}
-        <div className="rounded-2xl border-indigo-200/80 bg-gradient-to-r from-indigo-50/60 to-white p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="h-4 w-4 text-indigo-600" />
-            <h3 className="text-sm font-bold text-indigo-950">
-              Fondasi yang Saya Bangun untuk Role Lain
-            </h3>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-500">
-            <span className="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border-indigo-200/70">
-              Master data siap
-            </span>
-            <ArrowRight className="h-3.5 w-3.5" />
-            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border-emerald-200/70">
-              Petugas menjalankan operasi gudang
-            </span>
-            <ArrowRight className="h-3.5 w-3.5" />
-            <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border-amber-200/70">
-              Supervisor mengawasi & menyetujui
-            </span>
-          </div>
-          <p className="text-xs text-indigo-900 mt-3 leading-relaxed">
-            Barang hanya dapat ditransaksikan bila master datanya sudah{" "}
-            <strong>ACTIVE</strong>. Karena itu akurasi master data Anda
-            langsung menentukan kelancaran kerja Petugas dan ketepatan
-            pengawasan Supervisor.
-          </p>
-        </div>
       </div>
 
-      {/* Governance summary from existing data */}
+      {/* ── 4. Ringkasan Fondasi Sistem (Live Data) ── */}
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-slate-800 rounded-full" />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              Ringkasan Tata Kelola
-            </h2>
-            <p className="text-xs text-slate-500">
-              Kondisi fondasi sistem dari data yang tersedia.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Status Master Data & Fondasi
+          </h2>
+          <p className="text-xs text-slate-500">
+            Ringkasan entitas data master dan kepatuhan sistem terkini.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
-            title="Master Barang Aktif"
+            title="Katalog SKU Aktif"
             value={counts.activeItems}
-            description="Katalog SKU siap ditransaksikan"
+            description="Item barang siap transaksi"
             icon={Package}
-            variant="indigo"
+            variant="default"
           />
           <MetricCard
-            title="Infrastruktur Gudang"
+            title="Gudang & Lokasi"
             value={counts.activeWarehouses}
             description={`${counts.activeLocations} zona rak terdaftar`}
             icon={Warehouse}
@@ -361,56 +246,38 @@ export default async function AdminWorkflowPage() {
           <MetricCard
             title="Volume Persediaan"
             value={counts.totalInventoryQty.toLocaleString()}
-            description="Total unit stok di sistem"
+            description="Total unit stok tercatat"
             icon={Layers}
             variant="success"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Master data quick access */}
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Pusat Master Data
-                </h3>
-              </div>
-              <span className="text-[10px] text-slate-400">
-                Entitas yang saya kelola
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Master Data Menu */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <ShieldCheck className="h-4 w-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-slate-900">Kelola Master Data</h3>
             </div>
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                {
-                  label: "Katalog Barang & SKU",
-                  href: "/items",
-                  icon: Package,
-                },
-                {
-                  label: "Fasilitas Gudang",
-                  href: "/warehouses",
-                  icon: Warehouse,
-                },
-                {
-                  label: "Zona & Rak Lokasi",
-                  href: "/locations",
-                  icon: MapPin,
-                },
+                { label: "Katalog Barang & SKU", href: "/items", icon: Package },
+                { label: "Fasilitas Gudang", href: "/warehouses", icon: Warehouse },
+                { label: "Zona & Rak Lokasi", href: "/locations", icon: MapPin },
                 { label: "Kategori Produk", href: "/categories", icon: Tags },
                 { label: "Satuan Ukuran", href: "/units", icon: Ruler },
-              ].map((m) => {
-                const MIcon = m.icon;
+                { label: "Koreksi Stok (Adj)", href: "/inventory/adjustment", icon: SlidersHorizontal },
+              ].map((item) => {
+                const ItemIcon = item.icon;
                 return (
                   <Link
-                    key={m.href}
-                    href={m.href}
-                    className="flex items-center justify-between p-2.5 rounded-xl border-slate-100 bg-white/70 hover:bg-slate-50 hover:border-indigo-200 transition-colors text-xs font-medium text-slate-700"
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 text-xs font-semibold text-slate-700 transition-colors"
                   >
                     <span className="flex items-center gap-2">
-                      <MIcon className="h-3.5 w-3.5 text-indigo-600" />
-                      {m.label}
+                      <ItemIcon className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>{item.label}</span>
                     </span>
                     <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
                   </Link>
@@ -419,42 +286,24 @@ export default async function AdminWorkflowPage() {
             </div>
           </div>
 
-          {/* Audit & history */}
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+          {/* Audit & Compliance */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-slate-600" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Audit & Histori Sistem
-                </h3>
+                <ShieldAlert className="h-4 w-4 text-slate-700" />
+                <h3 className="text-sm font-bold text-slate-900">Audit & Log Aktivitas</h3>
               </div>
               <Link href="/audit">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-[11px] text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                >
-                  Audit Trail <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
+                <span className="text-xs font-semibold text-blue-700 hover:underline">
+                  Semua Log →
+                </span>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {[
-                {
-                  label: "Log Mutasi",
-                  href: "/reports/movements",
-                  icon: ScrollText,
-                },
-                {
-                  label: "Rekap Opname",
-                  href: "/reports/opnames",
-                  icon: FileSpreadsheet,
-                },
-                {
-                  label: "Stok Rendah",
-                  href: "/reports/low-stock",
-                  icon: SlidersHorizontal,
-                },
+                { label: "Buku Besar Mutasi", href: "/reports/movements", icon: ScrollText },
+                { label: "Rekapitulasi Opname", href: "/reports/opnames", icon: FileSpreadsheet },
+                { label: "Peringatan Stok", href: "/reports/low-stock", icon: SlidersHorizontal },
                 { label: "Audit Keamanan", href: "/audit", icon: ShieldAlert },
               ].map((r) => {
                 const RIcon = r.icon;
@@ -462,45 +311,38 @@ export default async function AdminWorkflowPage() {
                   <Link
                     key={r.href}
                     href={r.href}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border-slate-100 bg-white/70 hover:bg-slate-50 hover:border-indigo-200 transition-colors text-xs font-medium text-slate-700"
+                    className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-blue-50/50 hover:border-blue-200 text-xs font-medium text-slate-700 transition-colors"
                   >
                     <RIcon className="h-3.5 w-3.5 text-slate-500" />
-                    {r.label}
+                    <span>{r.label}</span>
                   </Link>
                 );
               })}
             </div>
 
             {recentMovements.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                Belum ada pergerakan stok tercatat untuk diaudit.
+              <p className="text-xs text-slate-400 py-4 text-center">
+                Belum ada aktivitas mutasi tercatat.
               </p>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 pb-1">
-                  <Activity className="h-3.5 w-3.5" />
-                  Aktivitas Ledger Terakhir
-                </div>
+              <div className="space-y-1.5 pt-1">
                 {recentMovements.slice(0, 3).map((m) => (
                   <div
                     key={m._id}
-                    className="flex items-center justify-between p-2.5 rounded-xl border-slate-100 bg-white/60 text-xs"
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <Badge
                         variant="outline"
-                        className={`text-[10px] font-bold font-mono ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
+                        className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
                       >
                         {m.type}
                       </Badge>
                       <span className="font-mono font-bold text-slate-800">
                         {m.sku}
                       </span>
-                      <span className="text-slate-400 text-[11px]">
-                        • {m.actorName}
-                      </span>
                     </div>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-extrabold text-slate-900">
                       {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
                     </span>
                   </div>

@@ -20,18 +20,29 @@ export function EmptyState({
     return (
         <div
             className={cn(
-                'glass-surface-subtle flex flex-col items-center justify-center p-6 sm:p-10 text-center rounded-2xl border border-dashed border-slate-300/80 my-2',
+                'flex flex-col items-center justify-center p-8 sm:p-12 text-center',
+                'rounded-2xl border border-dashed border-slate-200 bg-slate-50/50',
                 className
             )}
         >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 shadow-sm border border-slate-200/60 text-slate-400 mb-4 transition-transform hover:scale-105">
-                <Icon className="h-6 w-6" />
+            {/* Icon circle */}
+            <div className="relative mb-5">
+                <div className="h-16 w-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center transition-transform duration-300 hover:scale-105">
+                    <Icon className="h-7 w-7 text-slate-400" />
+                </div>
+                {/* Subtle glow ring */}
+                <div className="absolute inset-0 rounded-2xl bg-slate-100 blur-xl opacity-60 -z-10 scale-110" />
             </div>
-            <h3 className="text-base font-semibold text-slate-800 tracking-tight">{title}</h3>
+
+            <h3 className="text-base font-bold text-slate-800 tracking-tight">{title}</h3>
+
             {description && (
-                <p className="mt-1.5 text-xs text-slate-500 max-w-md leading-relaxed">{description}</p>
+                <p className="mt-2 text-[13px] text-slate-500 max-w-xs leading-relaxed">
+                    {description}
+                </p>
             )}
-            {action && <div className="mt-5">{action}</div>}
+
+            {action && <div className="mt-6">{action}</div>}
         </div>
     );
 }

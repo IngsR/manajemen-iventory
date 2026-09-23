@@ -29,9 +29,6 @@ interface WorkspaceChromeProps {
   children: React.ReactNode;
 }
 
-// Single stateful boundary for the authenticated workspace: owns the mobile
-// drawer open/close flag so the server layout stays a pure RSC (no re-render
-// of page content when the drawer toggles).
 export function WorkspaceChrome({
   role,
   name,
@@ -41,7 +38,6 @@ export function WorkspaceChrome({
   badgeClass,
   children,
 }: WorkspaceChromeProps) {
-  // Desktop sidebar: collapsed = true hides it. Mobile drawer: open = true slides it in.
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -52,110 +48,116 @@ export function WorkspaceChrome({
         ? SupervisorNavbar
         : OfficerNavbar;
 
+  // Avatar initials
+  const initials = name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
-    <div className="min-h-screen bg-[#f6f8fb] text-slate-900 flex-col">
-      {/* Glass Header */}
-      <header className="glass-navbar sticky top-0 z-40 flex h-14 lg:h-16 w-full items-center justify-between gap-2 px-3 sm:px-4 lg:px-6">
-        <div className="flex items-center gap-2 min-w-0">
-          {/* Mobile sidebar trigger — opens the drawer overlay */}
-          <Button
-            variant="ghost"
-            size="icon"
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
+      {/* ── Dark Header ─────────────────────────────────────────────────── */}
+      <header className="app-header sticky top-0 z-40 flex h-16 w-full items-center justify-between gap-3 px-4 lg:px-6">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile menu button */}
+          <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="lg:hidden h-9 w-9 rounded-xl text-slate-600 hover:bg-slate-100 shrink-0"
+            className="lg:hidden h-9 w-9 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Buka menu navigasi"
           >
             <Menu className="h-5 w-5" />
-          </Button>
+          </button>
 
-          {/* Desktop sidebar trigger — collapses / expands the sidebar */}
-          <Button
-            variant="ghost"
-            size="icon"
+          {/* Desktop sidebar toggle */}
+          <button
             type="button"
             onClick={() => setCollapsed((v) => !v)}
-            className="hidden lg:inline-flex h-9 w-9 rounded-xl text-slate-600 hover:bg-slate-100 shrink-0"
+            className="hidden lg:flex h-9 w-9 rounded-xl items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             aria-label={collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar"}
-            title={collapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar"}
           >
             {collapsed ? (
               <PanelLeftOpen className="h-5 w-5" />
             ) : (
               <PanelLeftClose className="h-5 w-5" />
             )}
-          </Button>
+          </button>
 
+          {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 font-bold text-slate-900 group min-w-0"
+            className="flex items-center gap-2.5 group min-w-0"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md transition-transform duration-300 group-hover:scale-105 shrink-0">
-              <Boxes className="h-5 w-5" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg transition-transform duration-200 group-hover:scale-105 shrink-0">
+              <Boxes className="h-4 w-4" />
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-base tracking-tight font-bold leading-none">
+            <div className="flex flex-col min-w-0 leading-none">
+              <span className="text-white font-bold text-[15px] tracking-tight">
                 StockFlow
               </span>
-              <span className="hidden sm:block text-[10px] text-slate-400 font-medium tracking-wider mt-0.5 truncate">
+              <span className="hidden sm:block text-white/40 text-[11px] font-medium tracking-wider truncate mt-0.5">
                 {deskName}
               </span>
             </div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        {/* Right side */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* User info - hidden on small screens */}
           <div className="hidden md:flex flex-col items-end">
-            <span className="text-xs font-semibold text-slate-800">{name}</span>
-            <span className="text-[11px] text-slate-400 font-mono">
-              {email}
-            </span>
+            <span className="text-[13px] font-semibold text-white leading-none">{name}</span>
+            <span className="text-[11px] text-white/40 font-mono mt-0.5 leading-none">{email}</span>
           </div>
 
-          <span
-            className={cn(
-              "hidden sm:inline text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider",
-              badgeClass,
-            )}
-          >
+          {/* Role badge */}
+          <span className={cn("hidden sm:inline text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider", badgeClass)}>
             {badgeLabel}
           </span>
 
+          {/* Avatar */}
+          <div className="h-8 w-8 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {initials}
+          </div>
+
+          {/* Logout */}
           <form action={logoutAction}>
             <Button
               variant="ghost"
               size="sm"
               type="submit"
-              className="text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 rounded-xl h-9 px-2 sm:px-3"
-              title="Keluar / Logout"
+              className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl h-9 px-2.5 text-[13px]"
+              title="Keluar"
             >
               <LogOut className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline text-xs font-medium">
-                Logout
-              </span>
+              <span className="hidden sm:inline font-medium">Logout</span>
             </Button>
           </form>
         </div>
       </header>
 
-      {/* Layout Body: isolated role navbar + main content */}
-      <div className="flex flex-1 min-h-[calc(100vh-3.5rem)] lg:min-h-[calc(100vh-4rem)]">
-        {/* Desktop sidebar (collapsible) */}
-        {!collapsed && <Navbar variant="desktop" />}
+      {/* ── Body: Sidebar + Content ──────────────────────────────────────── */}
+      <div className="flex flex-1 min-h-[calc(100vh-4rem)]">
+        {/* Desktop sidebar */}
+        {!collapsed && (
+          <div className="hidden lg:block">
+            <Navbar variant="desktop" />
+          </div>
+        )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 min-w-0 overflow-y-auto p-3 sm:p-5 lg:p-8">
+        {/* Main content */}
+        <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8 animate-fade-up">
           {children}
         </main>
       </div>
 
-      {/* Mobile drawer */}
+      {/* ── Mobile Drawer ────────────────────────────────────────────────── */}
       <div
         className={cn(
-          "fixed inset-0 z-50 lg:hidden transition-opacity duration-200",
-          drawerOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none",
+          "fixed inset-0 z-50 lg:hidden transition-all duration-300",
+          drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         role="dialog"
         aria-modal="true"
@@ -163,66 +165,58 @@ export function WorkspaceChrome({
       >
         {/* Overlay */}
         <div
-          className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+          className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
           onClick={() => setDrawerOpen(false)}
         />
 
         {/* Drawer panel */}
         <div
           className={cn(
-            "absolute inset-y-0 left-0 w-[85%] max-w-xs glass-surface flex-col shadow-2xl transition-transform duration-300 ease-out",
-            drawerOpen ? "translate-x-0" : "-translate-x-full",
+            "absolute inset-y-0 left-0 w-[280px] app-sidebar flex flex-col shadow-2xl",
+            "transition-transform duration-300 ease-smooth",
+            drawerOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/70">
+          {/* Drawer header */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-white/07">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md">
-                <Boxes className="h-5 w-5" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-white shadow-md">
+                <Boxes className="h-4 w-4" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-tight leading-none">
-                  StockFlow
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium tracking-wider mt-0.5">
-                  {deskName}
-                </span>
+              <div className="flex flex-col leading-none">
+                <span className="text-white font-bold text-[15px] tracking-tight">StockFlow</span>
+                <span className="text-white/40 text-[11px] font-medium tracking-wider mt-0.5">{deskName}</span>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               type="button"
               onClick={() => setDrawerOpen(false)}
-              className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100"
+              className="h-8 w-8 rounded-xl flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Tutup menu"
             >
-              <X className="h-5 w-5" />
-            </Button>
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
+          {/* Nav items */}
           <div
-            className="flex-1 overflow-y-auto py-2"
+            className="flex-1 overflow-y-auto py-3"
             onClick={() => setDrawerOpen(false)}
           >
             <Navbar variant="mobile" />
           </div>
 
-          <div className="px-4 py-3 border-t border-slate-200/70">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-800 truncate">
-                  {name}
-                </p>
-                <p className="text-[10px] text-slate-400 font-mono truncate">
-                  {email}
-                </p>
+          {/* User footer */}
+          <div className="px-4 py-3 border-t border-white/07">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-white/15 border border-white/20 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                {initials}
               </div>
-              <span
-                className={cn(
-                  "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0",
-                  badgeClass,
-                )}
-              >
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-white truncate">{name}</p>
+                <p className="text-[11px] text-white/40 font-mono truncate">{email}</p>
+              </div>
+              <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0", badgeClass)}>
                 {badgeLabel}
               </span>
             </div>

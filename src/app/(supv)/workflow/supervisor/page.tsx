@@ -11,7 +11,6 @@ import {
 } from "@/services/reporting/DashboardService";
 import { getOpnameReport } from "@/services/reporting/InventoryReportService";
 import { MetricCard } from "@/components/MetricCard";
-import { StatusDot } from "@/components/shared/StatusDot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,13 +19,10 @@ import {
   AlertTriangle,
   ClipboardCheck,
   CheckCircle2,
-  XCircle,
   Boxes,
   ArrowRight,
-  ArrowDown,
   ShieldCheck,
   ShieldX,
-  ScrollText,
   FileCheck2,
   Gavel,
   Clock,
@@ -37,7 +33,7 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Alur Kerja Supervisor - StockFlow ERP",
   description:
-    "Alur pengawasan, review variance, dan keputusan approval Stock Opname oleh Supervisor",
+    "Alur pengawasan stok, evaluasi selisih variance, dan keputusan approval Stock Opname oleh Supervisor",
 };
 
 export default async function SupervisorWorkflowPage() {
@@ -69,52 +65,42 @@ export default async function SupervisorWorkflowPage() {
   const approvedCount =
     opnameSummary.find((s) => s.status === "APPROVED")?.count ?? 0;
 
-  // Supervisor flow — oversight, review, decision. No warehouse execution.
-  const flow = [
+  const steps = [
     {
       step: "01",
-      stage: "MONITOR",
       title: "Pantau Kondisi Stok",
-      icon: Eye,
-      accent: "bg-amber-50 text-amber-700 border-amber-200/70",
-      desc: "Amati stok kritis, low stock, dan aktivitas mutasi gudang sebagai bahan pengawasan.",
-      outputs: "Mengetahui item yang perlu restock atau investigasi.",
+      desc: "Amati pergerakan barang dan pantau item dengan status stok kritis atau mendekati batas minimum.",
       href: "/reports/low-stock",
       cta: "Lihat Stok Kritis",
-      secondary: { label: "Buku Besar Mutasi", href: "/reports/movements" },
+      icon: Eye,
+      color: "text-amber-700 bg-amber-50 border-amber-200",
     },
     {
       step: "02",
-      stage: "OPNAME MASUK",
       title: "Terima Pengajuan Opname",
-      icon: ClipboardCheck,
-      accent: "bg-blue-50 text-blue-700 border-blue-200/70",
-      desc: "Dokumen Stock Opname yang sudah di-submit Petugas masuk ke antrean review Anda.",
-      outputs: "Daftar dokumen berstatus SUBMITTED siap diperiksa.",
+      desc: "Buka dokumen hitung fisik yang telah disubmit Petugas dan masuk ke daftar antrean peninjauan.",
       href: "/inventory/stock-opname",
-      cta: "Buka Antrean Review",
+      cta: "Buka Antrean",
+      icon: ClipboardCheck,
+      color: "text-blue-700 bg-blue-50 border-blue-200",
     },
     {
       step: "03",
-      stage: "REVIEW VARIANCE",
-      title: "Periksa Selisih Fisik",
-      icon: Activity,
-      accent: "bg-purple-50 text-purple-700 border-purple-200/70",
-      desc: "Bandingkan hasil hitung fisik dengan saldo sistem, telusuri penyebab variance.",
-      outputs: "Menilai apakah selisih wajar dan dapat disetujui.",
+      title: "Periksa Selisih (Variance)",
+      desc: "Bandingkan jumlah fisik riil dengan catatan sistem untuk mengidentifikasi apakah selisih wajar.",
       href: "/inventory/stock-opname",
-      cta: "Periksa Detail",
+      cta: "Evaluasi Selisih",
+      icon: Activity,
+      color: "text-purple-700 bg-purple-50 border-purple-200",
     },
     {
       step: "04",
-      stage: "APPROVE / REJECT",
-      title: "Ambil Keputusan",
-      icon: Gavel,
-      accent: "bg-indigo-50 text-indigo-700 border-indigo-200/70",
-      desc: "Setujui atau tolak hasil opname. Ini keputusan formal yang mengikat saldo.",
-      outputs: "Dokumen dikunci dengan keputusan final beserta jejak audit.",
+      title: "Keputusan Approve / Reject",
+      desc: "Berikan keputusan resmi. Setelah Approve, sistem akan otomatis menyesuaikan saldo buku persediaan.",
       href: "/inventory/stock-opname",
-      cta: "Putuskan Sekarang",
+      cta: "Beri Keputusan",
+      icon: Gavel,
+      color: "text-emerald-700 bg-emerald-50 border-emerald-200",
     },
   ];
 
@@ -127,278 +113,196 @@ export default async function SupervisorWorkflowPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-16 animate-fade-in">
-      {/* Hero: oversight identity */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-900 via-slate-900 to-slate-900 text-white p-5 sm:p-8 md:p-10 shadow-2xl border-amber-900/60">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl" />
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-800/60 border-amber-700/70 text-xs font-semibold text-amber-100">
-            <Eye className="h-3.5 w-3.5" />
-            SUPERVISOR • PENGAWASAN & APPROVAL
-          </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
+      {/* ── 1. Hero Summary (High Contrast & Clear Typography) ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-800">
+          <Eye className="h-3.5 w-3.5 text-amber-600" />
+          SUPERVISOR • PENGAWASAN & OTORISASI
+        </div>
+
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-snug">
             Alur Kerja Pengawasan & Persetujuan
           </h1>
-          <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-            Anda adalah <strong className="text-white">pengawas</strong>, bukan
-            operator gudang. Pekerjaan utama Anda: memantau kondisi stok,
-            menerima hasil opname Petugas, menilai variance, lalu memberikan
-            keputusan <strong className="text-white">Approve</strong> atau{" "}
-            <strong className="text-white">Reject</strong>.
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-3xl">
+            Anda adalah <strong className="text-slate-900 font-semibold">pengawas dan verifikator</strong> akurasi persediaan. Tugas utama Anda memantau stok kritis, memeriksa selisih (variance) dari penghitungan Petugas, dan memutuskan persetujuan (Approve/Reject) Stock Opname.
           </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border-white/15">
-              Peran saya: Verifikator & pemberi keputusan
-            </span>
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border-white/15">
-              Menerima pekerjaan dari Petugas
-            </span>
-          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2.5 pt-3 border-t border-slate-100">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-50 text-slate-700 border border-slate-200/80">
+            Peran saya: Verifikator & pengambil keputusan
+          </span>
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+            Setelah APPROVE → saldo sistem disesuaikan resmi
+          </span>
         </div>
       </div>
 
-      {/* Responsibility & limitation summary */}
+      {/* ── 2. Tanggung Jawab & Batasan (Executive Overview) ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="glass-card rounded-2xl p-5 border-emerald-200/70">
-          <div className="flex items-center gap-2 mb-3">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Tanggung Jawab Saya
-            </h3>
+        <div className="bg-white rounded-2xl p-6 border border-amber-200/80 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-amber-800">
+            <ShieldCheck className="h-5 w-5 text-amber-600" />
+            <h2 className="text-sm font-bold text-slate-900">
+              Tanggung Jawab Utama
+            </h2>
           </div>
-          <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-5">
-            <li>Memantau kondisi stok kritis dan aktivitas mutasi gudang.</li>
-            <li>Mereview hasil hitung fisik Stock Opname dari Petugas.</li>
-            <li>Menilai variance dan menelusuri penyebab selisih.</li>
-            <li>Memberikan keputusan Approve / Reject secara formal.</li>
+          <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
+            <li>Memantau barang menipis (low stock) dan histori mutasi barang.</li>
+            <li>Memeriksa hasil hitung fisik yang diajukan oleh Petugas.</li>
+            <li>Menganalisis selisih kuantitas fisik vs sistem (variance analysis).</li>
+            <li>Memberikan keputusan resmi persetujuan (Approve) atau penolakan (Reject).</li>
           </ul>
         </div>
-        <div className="glass-card rounded-2xl p-5 border-rose-200/70">
-          <div className="flex items-center gap-2 mb-3">
-            <ShieldX className="h-4 w-4 text-rose-600" />
-            <h3 className="text-sm font-bold text-slate-900">
-              Bukan Tugas Saya
-            </h3>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-slate-700">
+            <ShieldX className="h-5 w-5 text-slate-500" />
+            <h2 className="text-sm font-bold text-slate-900">
+              Bukan Wewenang Supervisor
+            </h2>
           </div>
-          <ul className="space-y-1.5 text-xs text-slate-600 list-disc pl-5">
-            <li>
-              Menjalankan Receive, Issue, Transfer, Return rutin di lantai
-              gudang.
-            </li>
-            <li>
-              Mengelola master data (Barang, Gudang, Lokasi, Kategori, Satuan).
-            </li>
-            <li>Mengubah angka hitung fisik Petugas tanpa verifikasi.</li>
+          <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
+            <li>Bukan eksekutor fisik rutin di gudang (Receive/Issue dilakukan Petugas).</li>
+            <li>Tidak mengelola master konfigurasi sistem atau akun pengguna (Wewenang Admin).</li>
+            <li>Tidak mengubah saldo barang secara langsung tanpa dokumen opname resmi.</li>
           </ul>
         </div>
       </div>
 
-      {/* Main flow: vertical oversight pipeline */}
+      {/* ── 3. Alur Tahapan Ringkas (Sequential Step Cards) ── */}
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-amber-600 rounded-full" />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              Alur Pengawasan Saya
-            </h2>
-            <p className="text-xs text-slate-500">
-              Dari memantau kondisi sampai memberi keputusan atas hasil opname
-              Petugas.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Tahapan Pengawasan & Persetujuan
+          </h2>
+          <p className="text-xs text-slate-500">
+            Alur terstruktur dari pemantauan stok hingga keputusan formal.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-500">
-          <span className="font-mono">MONITOR</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">OPNAME MENUNGGU REVIEW</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono">REVIEW VARIANCE</span>
-          <ArrowDown className="h-3.5 w-3.5" />
-          <span className="font-mono text-indigo-600">APPROVE / REJECT</span>
-        </div>
-
-        <div className="space-y-3">
-          {flow.map((s) => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {steps.map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.step}
-                className="glass-card rounded-2xl p-5 flex-col md:flex-row md:items-center gap-4 border-slate-200/80"
+                className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all gap-4"
               >
-                <div className="flex items-center gap-3 md:w-64 shrink-0">
-                  <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white">
-                    {s.step}
-                  </span>
-                  <div
-                    className={`p-2.5 rounded-xl border shadow-sm ${s.accent}`}
-                  >
-                    <Icon className="h-4 w-4" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white">
+                      {s.step}
+                    </span>
+                    <div className={`p-2 rounded-xl border ${s.color}`}>
+                      <Icon className="h-4 w-4" />
+                    </div>
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 block">
-                      {s.stage}
-                    </span>
-                    <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                    <h3 className="text-sm font-bold text-slate-900">
                       {s.title}
                     </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      {s.desc}
+                    </p>
                   </div>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {s.desc}
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    <span className="font-semibold text-slate-700">
-                      Hasil:{" "}
-                    </span>
-                    {s.outputs}
-                  </p>
-                </div>
-                <div className="flex md:flex-col gap-2 shrink-0 md:w-40">
-                  <Link href={s.href}>
-                    <Button
-                      size="sm"
-                      className="w-full h-8 text-[11px] rounded-xl bg-amber-600 hover:bg-amber-700 text-white"
-                    >
-                      {s.cta}
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
-                  {s.secondary && (
-                    <Link href={s.secondary.href}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full h-7 text-[11px] rounded-xl border-slate-200/80"
-                      >
-                        {s.secondary.label}
-                      </Button>
-                    </Link>
-                  )}
-                </div>
+
+                <Link href={s.href} className="pt-2">
+                  <Button
+                    size="sm"
+                    className="w-full h-8 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white"
+                  >
+                    {s.cta}
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
               </div>
             );
           })}
         </div>
-
-        {/* Decision outcome: Approve vs Reject */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-2xl border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 to-white p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <h3 className="text-sm font-bold text-emerald-950">
-                Jika APPROVE
-              </h3>
-            </div>
-            <p className="text-xs text-emerald-800 leading-relaxed">
-              Sistem menjalankan penyesuaian saldo melalui mekanisme adjustment
-              yang sudah ada, sehingga stok sistem kembali sesuai hasil hitung
-              fisik. Keputusan tercatat pada audit trail.
-            </p>
-          </div>
-          <div className="rounded-2xl border-rose-200/80 bg-gradient-to-br from-rose-50/70 to-white p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <XCircle className="h-4 w-4 text-rose-600" />
-              <h3 className="text-sm font-bold text-rose-950">Jika REJECT</h3>
-            </div>
-            <p className="text-xs text-rose-800 leading-relaxed">
-              Saldo sistem tetap tidak berubah. Dokumen opname perlu
-              ditindaklanjuti — hitung ulang atau perbaikan data oleh Petugas
-              sebelum diajukan kembali.
-            </p>
-          </div>
-        </div>
       </div>
 
-      {/* Oversight summary from existing data */}
+      {/* ── 4. Ringkasan Kondisi Saat Ini (Live Data) ── */}
       <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-slate-800 rounded-full" />
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              Ringkasan Pengawasan
-            </h2>
-            <p className="text-xs text-slate-500">
-              Kondisi terkini sebagai bahan keputusan Anda.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+            Status Pengawasan & Antrean
+          </h2>
+          <p className="text-xs text-slate-500">
+            Data kondisi persediaan kritis dan dokumen opname yang memerlukan tindakan.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
-            title="Menunggu Review Saya"
-            value={submittedCount}
-            description="Dokumen opname berstatus SUBMITTED"
-            icon={Clock}
-            variant={submittedCount > 0 ? "warning" : "default"}
-            badge={submittedCount > 0 ? "Perlu Keputusan" : "Bersih"}
-          />
-          <MetricCard
-            title="Stok Kritis"
+            title="Stok Menipis (Kritis)"
             value={counts.lowStockCount}
             description="Item di bawah batas minimum"
             icon={AlertTriangle}
-            variant={counts.lowStockCount > 0 ? "danger" : "default"}
+            variant={counts.lowStockCount > 0 ? "warning" : "default"}
           />
           <MetricCard
-            title="Total Stok Fisik"
+            title="Total Persediaan"
             value={counts.totalInventoryQty.toLocaleString()}
-            description="Unit tercatat di sistem"
+            description="Total unit tercatat di sistem"
             icon={Boxes}
             variant="default"
           />
           <MetricCard
+            title="Menunggu Keputusan"
+            value={submittedCount}
+            description="Dokumen opname siap direview"
+            icon={Clock}
+            variant={submittedCount > 0 ? "warning" : "default"}
+            badge={submittedCount > 0 ? "Perlu Review" : "Nihil"}
+          />
+          <MetricCard
             title="Opname Disetujui"
             value={approvedCount}
-            description="Dokumen opname telah di-approve"
+            description="Telah selesai & saldo disesuaikan"
             icon={FileCheck2}
             variant="success"
           />
         </div>
 
-        {/* Priority approval queue */}
-        <div className="glass-card rounded-2xl p-6 border-amber-200/70 bg-gradient-to-r from-amber-50/40 to-white">
-          <div className="flex items-center justify-between pb-4 mb-2 border-b border-amber-100">
+        {/* Antrean Approval Table */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
               <h3 className="text-sm font-bold text-slate-900">
-                Antrean Opname Menunggu Keputusan Saya
+                Antrean Dokumen Opname Menunggu Review
               </h3>
             </div>
             <Link href="/inventory/stock-opname">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-amber-700 hover:bg-amber-100/60 rounded-xl"
-              >
-                Semua Dokumen <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Button>
+              <span className="text-xs font-semibold text-amber-700 hover:underline">
+                Buka Semua Dokumen →
+              </span>
             </Link>
           </div>
 
           {pendingApprovals.data.length === 0 ? (
-            <p className="text-xs text-slate-400 py-8 text-center">
-              Tidak ada dokumen opname yang menunggu keputusan Anda saat ini.
+            <p className="text-xs text-slate-400 py-6 text-center">
+              Tidak ada dokumen opname yang menunggu keputusan saat ini.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-amber-200/40 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                    <th className="pb-2.5">No. Opname</th>
+                  <tr className="border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                    <th className="pb-2.5">No. Dokumen</th>
                     <th className="pb-2.5">Diajukan Oleh</th>
                     <th className="pb-2.5">Waktu Submit</th>
-                    <th className="pb-2.5 text-center">Item</th>
+                    <th className="pb-2.5 text-center">Jumlah Item</th>
                     <th className="pb-2.5 text-right">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-amber-100/80">
+                <tbody className="divide-y divide-slate-100">
                   {pendingApprovals.data.map((op) => (
-                    <tr
-                      key={op._id}
-                      className="hover:bg-amber-50/40 transition-colors"
-                    >
+                    <tr key={op._id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="py-3 font-mono font-bold text-slate-800">
                         {op.opnameNumber}
                       </td>
@@ -407,15 +311,12 @@ export default async function SupervisorWorkflowPage() {
                       </td>
                       <td className="py-3 text-slate-500">
                         {op.submittedAt
-                          ? new Date(op.submittedAt).toLocaleDateString(
-                              "id-ID",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )
+                          ? new Date(op.submittedAt).toLocaleDateString("id-ID", {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
                           : "-"}
                       </td>
                       <td className="py-3 text-center font-bold text-slate-800">
@@ -425,7 +326,7 @@ export default async function SupervisorWorkflowPage() {
                         <Link href="/inventory/stock-opname">
                           <Button
                             size="sm"
-                            className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
+                            className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
                           >
                             Review & Putuskan
                           </Button>
@@ -439,49 +340,46 @@ export default async function SupervisorWorkflowPage() {
           )}
         </div>
 
-        {/* Monitoring data: transactions are read-only observation, not actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+        {/* Monitoring Bottom Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Low Stock Watchlist */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-rose-500" />
                 <h3 className="text-sm font-bold text-slate-900">
-                  Bahan Pengawasan: Stok Kritis
+                  Barang Perlu Restock Segera
                 </h3>
               </div>
               <Link href="/reports/low-stock">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-[11px] text-amber-700 hover:bg-amber-50 rounded-lg"
-                >
-                  Selengkapnya <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
+                <span className="text-xs font-semibold text-amber-700 hover:underline">
+                  Semua Laporan →
+                </span>
               </Link>
             </div>
             {lowStockItems.length === 0 ? (
-              <p className="text-xs text-slate-400 py-8 text-center">
-                Seluruh barang berada pada tingkat persediaan aman.
+              <p className="text-xs text-slate-400 py-6 text-center">
+                Semua item persediaan berada di atas batas minimum.
               </p>
             ) : (
               <div className="space-y-2">
                 {lowStockItems.map((item) => (
                   <div
                     key={item.sku}
-                    className="flex items-center justify-between p-2.5 rounded-xl border-slate-100 bg-white/60 text-xs"
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
                   >
                     <div>
-                      <span className="font-mono font-bold text-slate-800">
+                      <span className="font-bold text-slate-800">{item.name}</span>
+                      <span className="block font-mono text-[10px] text-slate-400">
                         {item.sku}
                       </span>
-                      <p className="text-slate-600 mt-0.5">{item.name}</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-rose-600 block">
-                        {item.totalStock} / Min {item.minStock}
+                      <span className="font-extrabold text-rose-600">
+                        {item.totalStock}
                       </span>
-                      <span className="text-[10px] text-slate-400">
-                        Defisit {item.deficit} unit
+                      <span className="block text-[10px] text-slate-400">
+                        Min: {item.minStock}
                       </span>
                     </div>
                   </div>
@@ -490,56 +388,52 @@ export default async function SupervisorWorkflowPage() {
             )}
           </div>
 
-          <div className="glass-card rounded-2xl p-5">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
+          {/* Recent Movement Observation */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-blue-500" />
+                <Activity className="h-4 w-4 text-blue-600" />
                 <h3 className="text-sm font-bold text-slate-900">
-                  Bahan Pengawasan: Aktivitas Mutasi
+                  Pengawasan Mutasi Terakhir
                 </h3>
               </div>
               <Link href="/reports/movements">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-[11px] text-amber-700 hover:bg-amber-50 rounded-lg"
-                >
-                  Buku Besar <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
+                <span className="text-xs font-semibold text-amber-700 hover:underline">
+                  Buku Besar →
+                </span>
               </Link>
             </div>
-            <p className="text-[11px] text-slate-400 mb-2">
-              Data observasi aktivitas Petugas — bukan aksi yang Anda eksekusi.
-            </p>
             {recentMovements.length === 0 ? (
               <p className="text-xs text-slate-400 py-6 text-center">
-                Belum ada pergerakan stok tercatat.
+                Belum ada pergerakan barang yang tercatat.
               </p>
             ) : (
               <div className="space-y-2">
                 {recentMovements.map((m) => (
                   <div
                     key={m._id}
-                    className="flex items-center justify-between p-2.5 rounded-xl border-slate-100 bg-white/60 text-xs"
+                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <Badge
                         variant="outline"
-                        className={`text-[10px] font-bold font-mono ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
+                        className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
                       >
                         {m.type}
                       </Badge>
                       <span className="font-mono font-bold text-slate-800">
                         {m.sku}
                       </span>
-                      <span className="text-slate-400 text-[11px]">
-                        • {m.actorName}
-                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusDot variant="info" size="sm" />
-                      <span className="font-bold text-slate-900">
+                    <div className="text-right">
+                      <span className="font-extrabold text-slate-900">
                         {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                      </span>
+                      <span className="block text-[10px] text-slate-400">
+                        {new Date(m.timestamp).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                   </div>
@@ -547,19 +441,6 @@ export default async function SupervisorWorkflowPage() {
               </div>
             )}
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Link href="/audit">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl text-xs border-slate-200/80"
-            >
-              <ScrollText className="h-3.5 w-3.5 mr-1.5 text-slate-500" />
-              Buka Histori Log Audit
-            </Button>
-          </Link>
         </div>
       </div>
     </div>

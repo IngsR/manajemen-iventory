@@ -2,13 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'StockFlow - Manajemen Inventory ERP',
+    title: 'StockFlow — Manajemen Inventory ERP',
     description: 'Sistem Manajemen Persediaan Gudang Terpadu Berbasis Transaksi & Ledger',
 };
 
-// Root layout only provides the HTML shell.
-// Role-based workspace chrome (navbar/shell) now lives in each Route Group
-// layout: src/app/(admin)/layout.tsx, (supv), (office) and (auth).
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -16,7 +13,15 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="id">
-            <body className="antialiased selection:bg-slate-900 selection:text-white">
+            <head>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link
+                    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+                    rel="stylesheet"
+                />
+            </head>
+            <body className="antialiased font-sans">
                 {children}
             </body>
         </html>
