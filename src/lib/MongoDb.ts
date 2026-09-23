@@ -1,6 +1,6 @@
 import { MongoClient, Db } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/manajemen_inventory';
+const uri = process.env.MONGODB_URI_MONGODB_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/manajemen_inventory';
 const defaultDbName = process.env.MONGODB_DB_NAME || 'manajemen_inventory';
 
 const options = {
