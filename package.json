@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "next build",
+        "build": "npx tsx src/lib/SeedData.ts && next build",
         "start": "next start",
         "lint": "next lint",
         "typecheck": "tsc --noEmit",

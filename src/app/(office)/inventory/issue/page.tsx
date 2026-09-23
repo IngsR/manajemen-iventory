@@ -17,6 +17,7 @@ import {
     AlertCircle,
     Loader2,
     PackageMinus,
+    Sparkles,
 } from 'lucide-react';
 
 export default function IssuePage() {
@@ -26,6 +27,13 @@ export default function IssuePage() {
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<IssueStockResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [refNumber, setRefNumber] = useState('');
+
+    function handleGenerateRef() {
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const rand = Math.floor(1000 + Math.random() * 9000);
+        setRefNumber(`ISS-${dateStr}-${rand}`);
+    }
 
     useEffect(() => {
         Promise.all([getItemsAction(), getLocationsAction()]).then(([itemRes, locRes]) => {
@@ -166,13 +174,24 @@ export default function IssuePage() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="issue-ref">Nomor Referensi Kerja</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="issue-ref">Nomor Referensi Kerja</Label>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateRef}
+                                    className="text-[11px] text-orange-700 hover:underline flex items-center gap-1 font-medium"
+                                >
+                                    <Sparkles className="h-3 w-3" /> Auto No. Ref
+                                </button>
+                            </div>
                             <Input
                                 id="issue-ref"
                                 name="referenceNumber"
                                 type="text"
+                                value={refNumber}
+                                onChange={(e) => setRefNumber(e.target.value)}
                                 placeholder="WO-2026-001, REQ-889, dll"
-                                className="text-xs h-9 rounded-xl"
+                                className="text-xs h-9 rounded-xl font-mono"
                             />
                         </div>
                     </div>

@@ -17,6 +17,7 @@ import {
     getCurrentBalance,
     withInventoryTransaction,
 } from './InventoryStockHelper';
+import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { InventoryError } from './InventoryErrors';
 import { createAuditLog } from '@/services/AuditLogService';
 
@@ -42,9 +43,10 @@ export interface PopulatedOpnameDetail extends StockOpnameDoc {
 export async function createStockOpname(input: {
     warehouseId: string;
     notes?: string;
+    autoSnapshot?: boolean;
     actor: OpnameActor;
 }): Promise<{ stockOpnameId: string; opnameNumber: string }> {
-    const { warehouseId, notes, actor } = input;
+    const { warehouseId, notes, autoSnapshot = true, actor } = input;
 
     if (!ObjectId.isValid(warehouseId)) {
         throw new InventoryError('INVALID_INPUT', 'ID Gudang tidak valid.');
@@ -91,14 +93,152 @@ export async function createStockOpname(input: {
             warehouseId,
             warehouseName: warehouse.name,
             notes: doc.notes,
+            autoSnapshot,
         },
         timestamp: now,
     });
+
+    if (autoSnapshot) {
+        await populateStockOpnameFromWarehouse(doc._id.toHexString(), actor);
+    }
 
     return {
         stockOpnameId: doc._id.toHexString(),
         opnameNumber,
     };
+}
+
+export async function populateStockOpnameFromWarehouse(
+    stockOpnameId: string,
+    actor: OpnameActor
+): Promise<{ populatedCount: number }> {
+    if (!ObjectId.isValid(stockOpnameId)) {
+        throw new InventoryError('INVALID_INPUT', 'ID Opname tidak valid.');
+    }
+
+    const opnameCol = await getStockOpnameCollection();
+    const opnameOid = new ObjectId(stockOpnameId);
+    const opname = await opnameCol.findOne({ _id: opnameOid });
+    if (!opname) {
+        throw new InventoryError('NOT_FOUND', 'Dokumen opname tidak ditemukan.');
+    }
+    if (opname.status !== 'DRAFT') {
+        throw new InventoryError('INVALID_STATE', 'Hanya dokumen DRAFT yang dapat dimuat ulang.');
+    }
+
+    const balanceCol = await getStockBalanceCollection();
+    const balances = await balanceCol.find({ warehouseId: opname.warehouseId }).toArray();
+    const itemColOpname = await getStockOpnameItemCollection();
+    const now = new Date();
+    let populatedCount = 0;
+
+    if (balances.length > 0) {
+        for (const b of balances) {
+            const existing = await itemColOpname.findOne({
+                stockOpnameId: opnameOid,
+                itemId: b.itemId,
+                locationId: b.locationId,
+            });
+
+            if (existing) {
+                await itemColOpname.updateOne(
+                    { _id: existing._id },
+                    {
+                        $set: {
+                            systemQuantity: b.quantity,
+                            countedQuantity: b.quantity,
+                            difference: 0,
+                            updatedAt: now,
+                        },
+                    }
+                );
+            } else {
+                await itemColOpname.insertOne({
+                    _id: new ObjectId(),
+                    stockOpnameId: opnameOid,
+                    itemId: b.itemId,
+                    sku: b.sku,
+                    locationId: b.locationId,
+                    systemQuantity: b.quantity,
+                    countedQuantity: b.quantity,
+                    difference: 0,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+            }
+            populatedCount++;
+        }
+    } else {
+        const locCol = await getLocationCollection();
+        const locations = await locCol.find({ warehouseId: opname.warehouseId, isDeleted: false, status: 'ACTIVE' }).toArray();
+        const itemCol = await getItemCollection();
+        const activeItems = await itemCol.find({ isDeleted: false, status: 'ACTIVE' }).limit(50).toArray();
+
+        for (const loc of locations) {
+            for (const itm of activeItems) {
+                const existing = await itemColOpname.findOne({
+                    stockOpnameId: opnameOid,
+                    itemId: itm._id,
+                    locationId: loc._id,
+                });
+                if (!existing) {
+                    await itemColOpname.insertOne({
+                        _id: new ObjectId(),
+                        stockOpnameId: opnameOid,
+                        itemId: itm._id,
+                        sku: itm.sku,
+                        locationId: loc._id,
+                        systemQuantity: 0,
+                        countedQuantity: 0,
+                        difference: 0,
+                        createdAt: now,
+                        updatedAt: now,
+                    });
+                    populatedCount++;
+                }
+            }
+        }
+    }
+
+    return { populatedCount };
+}
+
+export async function setAllOpnameItemsMatched(
+    stockOpnameId: string,
+    actor: OpnameActor
+): Promise<{ updatedCount: number }> {
+    if (!ObjectId.isValid(stockOpnameId)) {
+        throw new InventoryError('INVALID_INPUT', 'ID Opname tidak valid.');
+    }
+
+    const opnameCol = await getStockOpnameCollection();
+    const opnameOid = new ObjectId(stockOpnameId);
+    const opname = await opnameCol.findOne({ _id: opnameOid });
+    if (!opname) {
+        throw new InventoryError('NOT_FOUND', 'Dokumen opname tidak ditemukan.');
+    }
+    if (opname.status !== 'DRAFT') {
+        throw new InventoryError('INVALID_STATE', 'Hanya dokumen DRAFT yang dapat diperbarui.');
+    }
+
+    const itemCol = await getStockOpnameItemCollection();
+    const items = await itemCol.find({ stockOpnameId: opnameOid }).toArray();
+    const now = new Date();
+
+    for (const item of items) {
+        await itemCol.updateOne(
+            { _id: item._id },
+            {
+                $set: {
+                    countedQuantity: item.systemQuantity,
+                    difference: 0,
+                    updatedAt: now,
+                },
+            }
+        );
+    }
+
+    return { updatedCount: items.length };
 }
 
 // ── 2. Add or Update Detail Item in Opname (DRAFT only) ──────────────────────

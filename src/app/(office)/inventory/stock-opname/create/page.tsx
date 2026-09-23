@@ -114,10 +114,30 @@ export default async function CreateStockOpnamePage() {
                         <textarea
                             id="opname-notes"
                             name="notes"
-                            rows={3}
-                            placeholder="Contoh: Stock Opname Rutin Akhir Bulan September 2026, Audit Triwulan..."
+                            rows={2}
+                            placeholder="Contoh: Stock Opname Rutin Akhir Bulan, Audit Periodik..."
                             className="w-full text-xs rounded-xl border border-input bg-background p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         />
+                    </div>
+
+                    {/* Corporate Auto Snapshot Feature (Minimal Step) */}
+                    <div className="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-start gap-3">
+                        <input
+                            type="checkbox"
+                            id="auto-snapshot"
+                            name="autoSnapshot"
+                            value="true"
+                            defaultChecked
+                            className="mt-1 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <div className="space-y-0.5">
+                            <label htmlFor="auto-snapshot" className="text-xs font-bold text-emerald-950 cursor-pointer">
+                                Otomatis Muat Snapshot Seluruh Stok Gudang (Rekomendasi)
+                            </label>
+                            <p className="text-[11px] text-emerald-700 leading-relaxed">
+                                Memuat seluruh item &amp; saldo sistem di gudang ini seketika. Anda tinggal verifikasi fisik atau klik 1 tombol jika semua cocok tanpa perlu input manual satu per satu.
+                            </p>
+                        </div>
                     </div>
                 </form>
             </FormCard>

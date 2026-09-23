@@ -5,6 +5,8 @@ import { requirePermission, isAuthError } from '@/lib/Auth';
 import { isInventoryError } from '@/services/inventory/InventoryErrors';
 import {
     createStockOpname,
+    populateStockOpnameFromWarehouse,
+    setAllOpnameItemsMatched,
     addOrUpdateStockOpnameItem,
     removeStockOpnameItem,
     submitStockOpname,
@@ -31,6 +33,8 @@ export async function createStockOpnameAction(
 
         const warehouseId = formData.get('warehouseId') as string;
         const notes = (formData.get('notes') as string) || undefined;
+        const autoSnapshotVal = formData.get('autoSnapshot');
+        const autoSnapshot = autoSnapshotVal !== 'false' && autoSnapshotVal !== '0';
 
         if (!warehouseId) {
             return { success: false, error: 'Gudang wajib dipilih.', code: 'INVALID_INPUT' };
@@ -39,6 +43,7 @@ export async function createStockOpnameAction(
         const result = await createStockOpname({
             warehouseId,
             notes,
+            autoSnapshot,
             actor: {
                 userId: user._id.toHexString(),
                 name: user.name,
@@ -53,6 +58,44 @@ export async function createStockOpnameAction(
         if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
         console.error('[createStockOpnameAction]', err);
         return { success: false, error: 'Gagal membuat dokumen stock opname.', code: 'ERROR' };
+    }
+}
+
+export async function populateStockOpnameAction(
+    stockOpnameId: string
+): Promise<OpnameActionResponse<{ populatedCount: number }>> {
+    try {
+        const user = await requirePermission('STOCK_OPNAME_CREATE');
+        const result = await populateStockOpnameFromWarehouse(stockOpnameId, {
+            userId: user._id.toHexString(),
+            name: user.name,
+            role: user.role,
+        });
+        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        return { success: true, data: result };
+    } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
+        if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
+        return { success: false, error: 'Gagal memuat saldo stok gudang.', code: 'ERROR' };
+    }
+}
+
+export async function setAllOpnameItemsMatchedAction(
+    stockOpnameId: string
+): Promise<OpnameActionResponse<{ updatedCount: number }>> {
+    try {
+        const user = await requirePermission('STOCK_OPNAME_CREATE');
+        const result = await setAllOpnameItemsMatched(stockOpnameId, {
+            userId: user._id.toHexString(),
+            name: user.name,
+            role: user.role,
+        });
+        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        return { success: true, data: result };
+    } catch (err) {
+        if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
+        if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
+        return { success: false, error: 'Gagal mencocokkan seluruh item.', code: 'ERROR' };
     }
 }
 
@@ -156,6 +199,8 @@ export async function approveStockOpnameAction(
         try {
             revalidatePath('/inventory/stock-opname');
             revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
+            revalidatePath('/dashboard/supervisor');
+            revalidatePath('/dashboard/admin');
             revalidatePath('/audit');
         } catch {}
 

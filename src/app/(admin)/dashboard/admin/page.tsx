@@ -24,6 +24,7 @@ import {
     Layers,
     FileSpreadsheet,
     ShieldCheck,
+    Users,
 } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
@@ -78,7 +79,13 @@ export default async function AdminDashboardPage() {
                         Pusat kendali master data, inventaris global, audit sistem, dan metrik operasional
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <Link href="/users">
+                        <Button size="sm" variant="outline" className="gap-1.5 rounded-xl border-indigo-200 bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100">
+                            <Users className="h-4 w-4 text-indigo-600" />
+                            Manajemen User
+                        </Button>
+                    </Link>
                     <Link href="/items">
                         <Button size="sm" className="gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
                             <PlusCircle className="h-4 w-4" />
