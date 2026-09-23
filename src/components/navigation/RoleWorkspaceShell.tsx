@@ -24,21 +24,8 @@ const ROLE_META: Record<WorkspaceRole, RoleMeta> = {
 
 export function RoleWorkspaceShell({ user, children }: RoleWorkspaceShellProps) {
     if (!user) {
-        return (
-            <div className="min-h-screen bg-[#f6f8fb] text-slate-900 flex flex-col">
-                <header className="glass-navbar sticky top-0 z-40 flex h-14 w-full items-center justify-between px-4 sm:px-6">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
-                            <Boxes className="h-5 w-5" />
-                        </div>
-                        <span className="text-lg tracking-tight font-semibold">StockFlow</span>
-                    </Link>
-                </header>
-                <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
-                    {children}
-                </main>
-            </div>
-        );
+        // Login page is full-screen split layout — render bare
+        return <>{children}</>;
     }
 
     const meta = ROLE_META[user.role as WorkspaceRole];

@@ -59,7 +59,7 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
             ],
         },
         {
-            title: 'Master Data Entitas',
+            title: 'Master Data',
             items: [
                 {
                     label: 'Barang & SKU',
@@ -103,19 +103,19 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
                     active: pathname.startsWith('/audit'),
                 },
                 {
-                    label: 'Log Riwayat Mutasi',
+                    label: 'Log Mutasi',
                     href: '/reports/movements',
                     icon: ScrollText,
                     active: pathname.startsWith('/reports/movements'),
                 },
                 {
-                    label: 'Peringatan Stok Rendah',
+                    label: 'Stok Rendah',
                     href: '/reports/low-stock',
                     icon: AlertTriangle,
                     active: pathname.startsWith('/reports/low-stock'),
                 },
                 {
-                    label: 'Rekapitulasi Opname',
+                    label: 'Rekap Opname',
                     href: '/reports/opnames',
                     icon: FileSpreadsheet,
                     active: pathname.startsWith('/reports/opnames'),
@@ -123,7 +123,7 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
             ],
         },
         {
-            title: 'Alur Kerja Saya',
+            title: 'Alur Kerja',
             items: [
                 {
                     label: 'Workflow Admin',
@@ -138,61 +138,58 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
     return (
         <aside
             className={cn(
-                'glass-surface flex-col justify-between p-4 z-20',
+                'app-sidebar flex flex-col z-20',
                 variant === 'desktop'
-                    ? 'hidden lg:flex lg:w-64 flex-shrink-0 border-r border-slate-200/80 min-h-[calc(100vh-4rem)] sticky top-16 self-start'
+                    ? 'hidden lg:flex w-60 flex-shrink-0 min-h-[calc(100vh-4rem)] sticky top-16 self-start'
                     : 'flex w-full'
             )}
         >
-            <div className="space-y-6">
-                {/* Role Workspace Badge */}
-                <div className="px-3 py-2 rounded-xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <ShieldCheck className="h-4 w-4 text-indigo-600 shrink-0" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-900">
-                            Admin Console
-                        </span>
+            <div className="flex-1 overflow-y-auto py-3 space-y-5 px-3">
+                {/* Role Identity Badge */}
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-indigo-500/15 border border-indigo-400/20">
+                    <div className="h-7 w-7 rounded-lg bg-indigo-500/25 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-3.5 w-3.5 text-indigo-300" />
                     </div>
-                    <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-indigo-200/60 text-indigo-800">
-                        GOVERNANCE
-                    </span>
+                    <div>
+                        <p className="text-[13px] font-bold text-indigo-200 leading-none">Admin Console</p>
+                        <p className="text-[10px] text-indigo-400/70 font-mono mt-0.5">GOVERNANCE</p>
+                    </div>
                 </div>
 
-                {/* Nav groups */}
+                {/* Nav Sections */}
                 {sections.map((section, idx) => (
-                    <div key={idx} className="space-y-1.5">
-                        <h4 className="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                            {section.title}
-                        </h4>
-                        <div className="space-y-1">
-                            {section.items.map((item) => {
-                                const Icon = item.icon;
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
+                    <div key={idx} className="space-y-1">
+                        <p className="sidebar-section-label px-3 mb-2">{section.title}</p>
+                        {section.items.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={cn(
+                                        'sidebar-item',
+                                        item.active && 'sidebar-item-active sidebar-item-active-admin'
+                                    )}
+                                >
+                                    <Icon
                                         className={cn(
-                                            'flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all duration-200',
-                                            item.active
-                                                ? 'role-pill-admin-active font-semibold'
-                                                : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                                            'h-[18px] w-[18px] shrink-0',
+                                            item.active ? 'text-indigo-300' : 'text-white/40'
                                         )}
-                                    >
-                                        <Icon className={cn('h-4 w-4 shrink-0', item.active ? 'text-white' : 'text-slate-500')} />
-                                        <span>{item.label}</span>
-                                    </Link>
-                                );
-                            })}
-                        </div>
+                                    />
+                                    <span className="truncate">{item.label}</span>
+                                </Link>
+                            );
+                        })}
                     </div>
                 ))}
             </div>
 
-            {/* Footer Tag */}
-            <div className="pt-4 border-t border-slate-200/60 text-center">
-                <span className="text-[10px] font-medium text-slate-400">
-                    Admin Workspace • Isolated
-                </span>
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-white/07">
+                <p className="text-[11px] text-white/25 font-medium text-center">
+                    Admin Workspace • StockFlow
+                </p>
             </div>
         </aside>
     );

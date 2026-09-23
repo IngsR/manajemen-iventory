@@ -12,6 +12,39 @@ interface MetricCardProps {
     className?: string;
 }
 
+const variantMap = {
+    default: {
+        icon: 'bg-blue-50 text-blue-600 border-blue-100',
+        badge: 'bg-blue-50 text-blue-700 border-blue-200',
+        glow: 'from-blue-500/10',
+        dot: 'bg-blue-400',
+    },
+    indigo: {
+        icon: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+        badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        glow: 'from-indigo-500/10',
+        dot: 'bg-indigo-400',
+    },
+    warning: {
+        icon: 'bg-amber-50 text-amber-600 border-amber-100',
+        badge: 'bg-amber-50 text-amber-700 border-amber-200',
+        glow: 'from-amber-500/10',
+        dot: 'bg-amber-400',
+    },
+    danger: {
+        icon: 'bg-rose-50 text-rose-600 border-rose-100',
+        badge: 'bg-rose-50 text-rose-700 border-rose-200',
+        glow: 'from-rose-500/10',
+        dot: 'bg-rose-400',
+    },
+    success: {
+        icon: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+        badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        glow: 'from-emerald-500/10',
+        dot: 'bg-emerald-400',
+    },
+};
+
 export function MetricCard({
     title,
     value,
@@ -21,59 +54,69 @@ export function MetricCard({
     variant = 'default',
     className,
 }: MetricCardProps) {
-    const variantStyles = {
-        default: 'text-blue-600 bg-blue-50/80 border-blue-200/60',
-        indigo: 'text-indigo-600 bg-indigo-50/80 border-indigo-200/60',
-        warning: 'text-amber-600 bg-amber-50/80 border-amber-200/60',
-        danger: 'text-rose-600 bg-rose-50/80 border-rose-200/60',
-        success: 'text-emerald-600 bg-emerald-50/80 border-emerald-200/60',
-    };
+    const styles = variantMap[variant];
 
     return (
         <div
             className={cn(
-                'glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden group',
+                'relative overflow-hidden rounded-2xl bg-white p-6 group',
+                'border border-[rgba(15,23,42,0.08)]',
+                'shadow-[0_1px_2px_rgba(15,23,42,0.04),_0_4px_16px_rgba(15,23,42,0.06)]',
+                'transition-all duration-250 ease-smooth',
+                'hover:shadow-[0_4px_24px_rgba(15,23,42,0.10)]',
+                'hover:-translate-y-[2px]',
                 className
             )}
         >
-            {/* Top row: Title and Icon */}
-            <div className="flex items-center justify-between pb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    {title}
-                </span>
+            {/* Subtle background glow */}
+            <div
+                className={cn(
+                    'absolute top-0 right-0 h-32 w-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-2xl',
+                    `bg-gradient-to-bl ${styles.glow} to-transparent`
+                )}
+            />
+
+            {/* Header: title + icon */}
+            <div className="flex items-start justify-between gap-3 relative">
+                <div className="space-y-0.5">
+                    <p className="text-[13px] font-semibold text-slate-500 tracking-wide">{title}</p>
+                </div>
                 {Icon && (
-                    <div
-                        className={cn(
-                            'p-2.5 rounded-xl border shadow-sm transition-transform duration-300 group-hover:scale-105',
-                            variantStyles[variant]
-                        )}
-                    >
-                        <Icon className="h-4 w-4" />
+                    <div className={cn('p-3 rounded-xl border shadow-sm shrink-0 transition-transform duration-300 group-hover:scale-105', styles.icon)}>
+                        <Icon className="h-5 w-5" />
                     </div>
                 )}
             </div>
 
-            {/* Middle: Big Metric Value */}
-            <div className="flex items-baseline justify-between pt-1">
-                <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-sans">
+            {/* Value */}
+            <div className="relative mt-4 flex items-end justify-between gap-3">
+                <div className="text-[2.25rem] font-black tracking-tight text-slate-900 leading-none">
                     {value}
                 </div>
                 {badge && (
-                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100/90 text-slate-700 border border-slate-200/60 backdrop-blur-sm">
+                    <span
+                        className={cn(
+                            'text-[11px] font-bold px-2.5 py-1 rounded-full border shrink-0 mb-1',
+                            styles.badge
+                        )}
+                    >
                         {badge}
                     </span>
                 )}
             </div>
 
-            {/* Bottom: Description */}
+            {/* Description */}
             {description && (
-                <p className="text-xs text-slate-500 mt-2 font-normal leading-relaxed">
-                    {description}
-                </p>
+                <p className="relative mt-2 text-[13px] text-slate-500 leading-relaxed">{description}</p>
             )}
 
-            {/* Apple-style subtle bottom glow line */}
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-slate-200 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Bottom accent line */}
+            <div
+                className={cn(
+                    'absolute bottom-0 left-0 h-[3px] w-0 group-hover:w-full transition-all duration-400 ease-smooth rounded-b-2xl',
+                    `bg-gradient-to-r ${styles.glow.replace('/10', '/60')} to-transparent`
+                )}
+            />
         </div>
     );
 }
