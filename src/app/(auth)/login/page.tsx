@@ -79,7 +79,7 @@ export default function LoginPage() {
                 </div>
                 <div className="text-center">
                     <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-tight">
-                        StockFlow
+                        Manajemen Inventori
                     </h1>
                     <p className="text-xs text-slate-500 font-medium">
                         Sistem Manajemen Inventaris
@@ -224,7 +224,7 @@ export default function LoginPage() {
 
             {/* ── Footer ── */}
             <footer className="text-center text-xs text-slate-400">
-                <p>© 2026 StockFlow • Sistem Informasi Manajemen Inventaris</p>
+                <p>© 2026 Manajemen Inventori</p>
             </footer>
         </main>
     );

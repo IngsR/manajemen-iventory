@@ -116,8 +116,8 @@ export function SupervisorNavbar({ variant = 'desktop' }: SupervisorNavbarProps)
                         <Eye className="h-3.5 w-3.5 text-amber-300" />
                     </div>
                     <div>
-                        <p className="text-[13px] font-bold text-amber-200 leading-none">Supervisor Desk</p>
-                        <p className="text-[10px] text-amber-400/70 font-mono mt-0.5">OVERSIGHT</p>
+                        <p className="text-[13px] font-bold text-amber-200 leading-none">Supervisor</p>
+                        <p className="text-[10px] text-amber-400/70 font-mono mt-0.5">Manajemen Inventori</p>
                     </div>
                 </div>
 
@@ -153,7 +153,7 @@ export function SupervisorNavbar({ variant = 'desktop' }: SupervisorNavbarProps)
             {/* Footer */}
             <div className="px-4 py-3 border-t border-white/07">
                 <p className="text-[11px] text-white/25 font-medium text-center">
-                    Supervisor Workspace • StockFlow
+                    Manajemen Inventori
                 </p>
             </div>
         </aside>

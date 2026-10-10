@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'StockFlow — Manajemen Inventory ERP',
-    description: 'Sistem Manajemen Persediaan Gudang Terpadu Berbasis Transaksi & Ledger',
+    title: 'Manajemen Inventori',
+    description: 'Sistem manajemen inventori gudang — pencatatan stok, transaksi barang, dan laporan.',
 };
 
 export default function RootLayout({

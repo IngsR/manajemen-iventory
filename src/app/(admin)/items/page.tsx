@@ -176,7 +176,7 @@ export default function ItemsPage() {
                 icon={Package}
                 badge={{ label: 'ADMINISTRATOR', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Master Data' },
                     { label: 'Barang & SKU' },
                 ]}

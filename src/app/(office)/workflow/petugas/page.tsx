@@ -31,7 +31,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Alur Kerja Petugas Gudang - StockFlow ERP",
+  title: "Alur Kerja Petugas Gudang - Manajemen Inventori",
   description:
     "Siklus kerja operasional petugas gudang: Penerimaan, Penataan Rak, Pengeluaran, Retur, dan Stock Opname",
 };

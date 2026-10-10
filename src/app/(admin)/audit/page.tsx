@@ -43,7 +43,7 @@ export default async function AuditPage() {
         icon={ShieldAlert}
         badge={{ label: "GOVERNANCE & AUDIT", variant: "admin" }}
         breadcrumbs={[
-          { label: "StockFlow", href: "/" },
+          { label: "Inventori", href: "/" },
           { label: "Audit & Analitik" },
           { label: "Audit Trail" },
         ]}

@@ -76,7 +76,7 @@ export default function TransferPage() {
                 icon={ArrowLeftRight}
                 badge={{ label: 'OPERASIONAL', variant: 'petugas' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Transaksi Stok' },
                     { label: 'Transfer Lokasi' },
                 ]}

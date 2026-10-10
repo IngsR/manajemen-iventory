@@ -108,7 +108,7 @@ export default async function StockOpnameListPage() {
                     variant: user.role === 'SUPERVISOR' ? 'supervisor' : 'petugas',
                 }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Stock Opname' },
                 ]}
                 actions={

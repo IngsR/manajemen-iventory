@@ -156,7 +156,7 @@ export default function UsersManagementPage() {
                 icon={Users}
                 badge={{ label: 'GOVERNANCE & SECURITY', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Tata Kelola', href: '/dashboard/admin' },
                     { label: 'Manajemen Pengguna' },
                 ]}

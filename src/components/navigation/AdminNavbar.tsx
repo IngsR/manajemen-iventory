@@ -151,8 +151,8 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
                         <ShieldCheck className="h-3.5 w-3.5 text-indigo-300" />
                     </div>
                     <div>
-                        <p className="text-[13px] font-bold text-indigo-200 leading-none">Admin Console</p>
-                        <p className="text-[10px] text-indigo-400/70 font-mono mt-0.5">GOVERNANCE</p>
+                        <p className="text-[13px] font-bold text-indigo-200 leading-none">Administrator</p>
+                        <p className="text-[10px] text-indigo-400/70 font-mono mt-0.5">Manajemen Inventori</p>
                     </div>
                 </div>
 
@@ -188,7 +188,7 @@ export function AdminNavbar({ variant = 'desktop' }: AdminNavbarProps) {
             {/* Footer */}
             <div className="px-4 py-3 border-t border-white/07">
                 <p className="text-[11px] text-white/25 font-medium text-center">
-                    Admin Workspace • StockFlow
+                    Manajemen Inventori
                 </p>
             </div>
         </aside>

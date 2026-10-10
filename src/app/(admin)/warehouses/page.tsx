@@ -133,7 +133,7 @@ export default function WarehousesPage() {
                 icon={Warehouse}
                 badge={{ label: 'ADMINISTRATOR', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Master Data' },
                     { label: 'Gudang (Warehouse)' },
                 ]}

@@ -139,7 +139,7 @@ export default async function StockOpnameDetailPage({ params }: PageProps) {
                 subtitle={`Pemeriksaan fisik gudang ${opname.warehouseName || 'Gudang'} • ID: ${opname._id.toHexString()}`}
                 icon={ClipboardPen}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Stock Opname', href: '/inventory/stock-opname' },
                     { label: opname.opnameNumber },
                 ]}

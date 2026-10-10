@@ -86,7 +86,7 @@ export default function ReceivePage() {
                 icon={ArrowDownToLine}
                 badge={{ label: 'OPERASIONAL', variant: 'petugas' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Transaksi Stok' },
                     { label: 'Penerimaan (Receive)' },
                 ]}

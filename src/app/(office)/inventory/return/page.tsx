@@ -75,7 +75,7 @@ export default function ReturnPage() {
                 icon={RotateCcw}
                 badge={{ label: 'OPERASIONAL', variant: 'petugas' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Transaksi Stok' },
                     { label: 'Retur (Return)' },
                 ]}

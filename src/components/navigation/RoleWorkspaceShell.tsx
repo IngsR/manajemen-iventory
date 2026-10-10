@@ -17,9 +17,9 @@ interface RoleMeta {
 
 // Role identity descriptor — single lookup, no nested switches.
 const ROLE_META: Record<WorkspaceRole, RoleMeta> = {
-    ADMIN: { label: 'ADMINISTRATOR', className: 'role-badge-admin', deskName: 'Admin Control Desk' },
-    SUPERVISOR: { label: 'SUPERVISOR', className: 'role-badge-supervisor', deskName: 'Oversight & Verification' },
-    PETUGAS: { label: 'OFFICER / PETUGAS', className: 'role-badge-petugas', deskName: 'Warehouse Floor Terminal' },
+    ADMIN: { label: 'Admin', className: 'role-badge-admin', deskName: 'Panel Admin' },
+    SUPERVISOR: { label: 'Supervisor', className: 'role-badge-supervisor', deskName: 'Panel Supervisor' },
+    PETUGAS: { label: 'Petugas', className: 'role-badge-petugas', deskName: 'Panel Petugas' },
 };
 
 export function RoleWorkspaceShell({ user, children }: RoleWorkspaceShellProps) {

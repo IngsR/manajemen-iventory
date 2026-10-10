@@ -70,7 +70,7 @@ export default async function CreateStockOpnamePage() {
                 icon={ClipboardPen}
                 badge={{ label: 'OPERASIONAL', variant: 'petugas' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Stock Opname', href: '/inventory/stock-opname' },
                     { label: 'Buat Baru' },
                 ]}

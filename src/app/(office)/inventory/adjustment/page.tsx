@@ -86,7 +86,7 @@ export default function AdjustmentPage() {
                 icon={SlidersHorizontal}
                 badge={{ label: 'OPERASIONAL', variant: 'petugas' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Transaksi Stok' },
                     { label: 'Koreksi (Adjustment)' },
                 ]}

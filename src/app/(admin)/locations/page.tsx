@@ -176,7 +176,7 @@ export default function LocationsPage() {
                 icon={MapPin}
                 badge={{ label: 'ADMINISTRATOR', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Master Data' },
                     { label: 'Lokasi & Zona' },
                 ]}

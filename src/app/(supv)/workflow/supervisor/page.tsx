@@ -31,7 +31,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Alur Kerja Supervisor - StockFlow ERP",
+  title: "Alur Kerja Supervisor - Manajemen Inventori",
   description:
     "Alur pengawasan stok, evaluasi selisih variance, dan keputusan approval Stock Opname oleh Supervisor",
 };

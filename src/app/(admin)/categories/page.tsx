@@ -133,7 +133,7 @@ export default function CategoriesPage() {
                 icon={Tags}
                 badge={{ label: 'ADMINISTRATOR', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Master Data' },
                     { label: 'Kategori' },
                 ]}

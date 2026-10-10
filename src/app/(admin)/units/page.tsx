@@ -128,7 +128,7 @@ export default function UnitsPage() {
                 icon={Ruler}
                 badge={{ label: 'ADMINISTRATOR', variant: 'admin' }}
                 breadcrumbs={[
-                    { label: 'StockFlow', href: '/' },
+                    { label: 'Inventori', href: '/' },
                     { label: 'Master Data' },
                     { label: 'Satuan (Unit)' },
                 ]}

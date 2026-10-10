@@ -30,7 +30,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Alur Tata Kelola Admin - StockFlow ERP",
+  title: "Alur Tata Kelola Admin - Manajemen Inventori",
   description:
     "Alur tata kelola sistem, manajemen master data, konfigurasi gudang, dan audit trail oleh Administrator",
 };

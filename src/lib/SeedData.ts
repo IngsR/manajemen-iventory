@@ -24,7 +24,7 @@ import { getCurrentBalance } from '@/services/inventory/InventoryStockHelper';
 
 export async function seedAllData(): Promise<void> {
     console.log('==================================================');
-    console.log('   StockFlow ERP — Master Data & Stock Seeder     ');
+    console.log('   Manajemen Inventori — Master Data & Stock Seeder     ');
     console.log('==================================================\n');
 
     // 1. Seed Users

@@ -95,7 +95,7 @@ export function WorkspaceChrome({
             </div>
             <div className="flex flex-col min-w-0 leading-none">
               <span className="text-white font-bold text-[15px] tracking-tight">
-                StockFlow
+                Inventori
               </span>
               <span className="hidden sm:block text-white/40 text-[11px] font-medium tracking-wider truncate mt-0.5">
                 {deskName}
@@ -184,7 +184,7 @@ export function WorkspaceChrome({
                 <Boxes className="h-4 w-4" />
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-white font-bold text-[15px] tracking-tight">StockFlow</span>
+                <span className="text-white font-bold text-[15px] tracking-tight">Inventori</span>
                 <span className="text-white/40 text-[11px] font-medium tracking-wider mt-0.5">{deskName}</span>
               </div>
             </div>
