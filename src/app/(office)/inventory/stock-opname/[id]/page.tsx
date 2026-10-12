@@ -51,8 +51,11 @@ import {
     RotateCcw,
 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
+// Rendering mode is decided by the Cache Components strategy (see
+// next.config.ts + docs/static-rendering.md). The legacy `dynamic` route segment
+// config is intentionally omitted — Cache Components rejects it. This detail
+// page reads the session, route params and live stock balances, so it renders at
+// request time.
 interface PageProps {
     params: Promise<{ id: string }>;
 }

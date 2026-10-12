@@ -1,8 +1,6 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/Auth";
-import { hasPermission } from "@/lib/Permissions";
+import { requirePagePermission } from "@/lib/Auth";
 import {
   getDashboardCounts,
   getRecentMovements,
@@ -28,7 +26,14 @@ import {
   Inbox,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+// ── Hybrid rendering note ────────────────────────────────────────────────────
+//
+// The guide half of this page (responsibilities, boundaries, daily cycle steps)
+// is documentation that only changes when the app ships, so it is prerendered
+// once and served statically. Everything that moves at runtime — KPI cards and
+// the recent-transaction feed — lives in <LiveOperationalStatus /> behind a
+// <Suspense> boundary and streams in per request.
+// See docs/static-rendering.md.
 
 export const metadata = {
   title: "Alur Kerja Petugas Gudang - Manajemen Inventori",
@@ -37,25 +42,8 @@ export const metadata = {
 };
 
 export default async function OfficerWorkflowPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (!hasPermission(user.role, "INVENTORY_VIEW")) {
-    redirect("/");
-  }
-
-  const [counts, recentMovements, opnameSummary] = await Promise.all([
-    getDashboardCounts(),
-    getRecentMovements(5),
-    getOpnameSummary(),
-  ]);
-
-  const submittedCount =
-    opnameSummary.find((s) => s.status === "SUBMITTED")?.count ?? 0;
-  const draftCount =
-    opnameSummary.find((s) => s.status === "DRAFT")?.count ?? 0;
+  // Server-side authorization boundary (also enforced by the route-group layout).
+  await requirePagePermission("INVENTORY_VIEW");
 
   const steps = [
     {
@@ -104,14 +92,6 @@ export default async function OfficerWorkflowPage() {
       color: "text-amber-700 bg-amber-50 border-amber-200",
     },
   ];
-
-  const movementBadgeClass: Record<string, string> = {
-    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
-    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
-    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
-    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
@@ -226,48 +206,79 @@ export default async function OfficerWorkflowPage() {
         </div>
       </div>
 
-      {/* ── 4. Ringkasan Kondisi Saat Ini (Live Data) ── */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-            Status Operasional
-          </h2>
-          <p className="text-xs text-slate-500">
-            Kondisi persediaan dan aktivitas terkini yang tercatat di sistem.
-          </p>
-        </div>
+      {/* ── 4. Ringkasan Kondisi Saat Ini (Live Data, streamed) ── */}
+      <Suspense fallback={<OperationalStatusSkeleton />}>
+        <LiveOperationalStatus />
+      </Suspense>
+    </div>
+  );
+}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Katalog Barang"
-            value={counts.activeItems}
-            description="Item yang dapat ditransaksikan"
-            icon={Package}
-            variant="default"
-          />
-          <MetricCard
-            title="Total Stok Fisik"
-            value={counts.totalInventoryQty.toLocaleString()}
-            description="Unit tercatat di seluruh lokasi"
-            icon={Boxes}
-            variant="default"
-          />
-          <MetricCard
-            title="Opname Draft"
-            value={draftCount}
-            description="Perlu diselesaikan & disubmit"
-            icon={ClipboardPen}
-            variant="default"
-          />
-          <MetricCard
-            title="Menunggu Supervisor"
-            value={submittedCount}
-            description="Dokumen dalam antrean review"
-            icon={Send}
-            variant={submittedCount > 0 ? "warning" : "default"}
-            badge={submittedCount > 0 ? "In Review" : "Nihil"}
-          />
-        </div>
+/**
+ * Runtime half of this route: KPI cards and the recent-transaction feed.
+ */
+async function LiveOperationalStatus() {
+  const [counts, recentMovements, opnameSummary] = await Promise.all([
+    getDashboardCounts(),
+    getRecentMovements(5),
+    getOpnameSummary(),
+  ]);
+
+  const submittedCount =
+    opnameSummary.find((s) => s.status === "SUBMITTED")?.count ?? 0;
+  const draftCount =
+    opnameSummary.find((s) => s.status === "DRAFT")?.count ?? 0;
+
+  const movementBadgeClass: Record<string, string> = {
+    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
+    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
+    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
+    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+          Status Operasional
+        </h2>
+        <p className="text-xs text-slate-500">
+          Kondisi persediaan dan aktivitas terkini yang tercatat di sistem.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Katalog Barang"
+          value={counts.activeItems}
+          description="Item yang dapat ditransaksikan"
+          icon={Package}
+          variant="default"
+        />
+        <MetricCard
+          title="Total Stok Fisik"
+          value={counts.totalInventoryQty.toLocaleString()}
+          description="Unit tercatat di seluruh lokasi"
+          icon={Boxes}
+          variant="default"
+        />
+        <MetricCard
+          title="Opname Draft"
+          value={draftCount}
+          description="Perlu diselesaikan & disubmit"
+          icon={ClipboardPen}
+          variant="default"
+        />
+        <MetricCard
+          title="Menunggu Supervisor"
+          value={submittedCount}
+          description="Dokumen dalam antrean review"
+          icon={Send}
+          variant={submittedCount > 0 ? "warning" : "default"}
+          badge={submittedCount > 0 ? "In Review" : "Nihil"}
+        />
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Quick Access Menu */}
@@ -351,7 +362,27 @@ export default async function OfficerWorkflowPage() {
               </div>
             )}
           </div>
-        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Static-safe placeholder shown while the live operational data streams in. */
+function OperationalStatusSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-4 w-48 rounded bg-slate-200" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-24 rounded-2xl border border-slate-200 bg-white"
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
+        <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
       </div>
     </div>
   );

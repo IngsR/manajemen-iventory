@@ -32,8 +32,10 @@ import {
     Check,
 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
+// Rendering mode is decided by the Cache Components strategy (see
+// next.config.ts + docs/static-rendering.md). The legacy `dynamic` route segment
+// config is intentionally omitted — Cache Components rejects it. This list reads
+// the session and live opname documents, so it renders at request time.
 export default async function StockOpnameListPage() {
     const user = await getCurrentUser();
 

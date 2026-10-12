@@ -1,8 +1,6 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/Auth";
-import { hasPermission } from "@/lib/Permissions";
+import { requirePagePermission } from "@/lib/Auth";
 import {
   getDashboardCounts,
   getLowStockItems,
@@ -28,7 +26,14 @@ import {
   Clock,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+// ── Hybrid rendering note ────────────────────────────────────────────────────
+//
+// The guide half of this page (responsibilities, boundaries, workflow steps) is
+// documentation that only changes when the app ships, so it is prerendered once
+// and served statically. Everything that actually moves at runtime — KPIs, the
+// approval queue, the low-stock watchlist and the movement feed — lives in
+// <LiveSupervisionStatus /> behind a <Suspense> boundary and streams in per
+// request. See docs/static-rendering.md.
 
 export const metadata = {
   title: "Alur Kerja Supervisor - Manajemen Inventori",
@@ -37,33 +42,8 @@ export const metadata = {
 };
 
 export default async function SupervisorWorkflowPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (!hasPermission(user.role, "STOCK_OPNAME_VIEW")) {
-    redirect("/");
-  }
-
-  const [
-    counts,
-    lowStockItems,
-    recentMovements,
-    opnameSummary,
-    pendingApprovals,
-  ] = await Promise.all([
-    getDashboardCounts(),
-    getLowStockItems(4),
-    getRecentMovements(5),
-    getOpnameSummary(),
-    getOpnameReport({ status: "SUBMITTED" }, 1, 5),
-  ]);
-
-  const submittedCount =
-    opnameSummary.find((s) => s.status === "SUBMITTED")?.count ?? 0;
-  const approvedCount =
-    opnameSummary.find((s) => s.status === "APPROVED")?.count ?? 0;
+  // Server-side authorization boundary (also enforced by the route-group layout).
+  await requirePagePermission("STOCK_OPNAME_VIEW");
 
   const steps = [
     {
@@ -103,14 +83,6 @@ export default async function SupervisorWorkflowPage() {
       color: "text-emerald-700 bg-emerald-50 border-emerald-200",
     },
   ];
-
-  const movementBadgeClass: Record<string, string> = {
-    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
-    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
-    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
-    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
@@ -225,50 +197,89 @@ export default async function SupervisorWorkflowPage() {
         </div>
       </div>
 
-      {/* ── 4. Ringkasan Kondisi Saat Ini (Live Data) ── */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-            Status Pengawasan & Antrean
-          </h2>
-          <p className="text-xs text-slate-500">
-            Data kondisi persediaan kritis dan dokumen opname yang memerlukan tindakan.
-          </p>
-        </div>
+      {/* ── 4. Ringkasan Kondisi Saat Ini (Live Data, streamed) ── */}
+      <Suspense fallback={<SupervisionStatusSkeleton />}>
+        <LiveSupervisionStatus />
+      </Suspense>
+    </div>
+  );
+}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Stok Menipis (Kritis)"
-            value={counts.lowStockCount}
-            description="Item di bawah batas minimum"
-            icon={AlertTriangle}
-            variant={counts.lowStockCount > 0 ? "warning" : "default"}
-          />
-          <MetricCard
-            title="Total Persediaan"
-            value={counts.totalInventoryQty.toLocaleString()}
-            description="Total unit tercatat di sistem"
-            icon={Boxes}
-            variant="default"
-          />
-          <MetricCard
-            title="Menunggu Keputusan"
-            value={submittedCount}
-            description="Dokumen opname siap direview"
-            icon={Clock}
-            variant={submittedCount > 0 ? "warning" : "default"}
-            badge={submittedCount > 0 ? "Perlu Review" : "Nihil"}
-          />
-          <MetricCard
-            title="Opname Disetujui"
-            value={approvedCount}
-            description="Telah selesai & saldo disesuaikan"
-            icon={FileCheck2}
-            variant="success"
-          />
-        </div>
+/**
+ * Runtime half of this route: KPI cards, approval queue, watchlist and the
+ * movement feed. Runs per request behind the boundary above.
+ */
+async function LiveSupervisionStatus() {
+  const [
+    counts,
+    lowStockItems,
+    recentMovements,
+    opnameSummary,
+    pendingApprovals,
+  ] = await Promise.all([
+    getDashboardCounts(),
+    getLowStockItems(4),
+    getRecentMovements(5),
+    getOpnameSummary(),
+    getOpnameReport({ status: "SUBMITTED" }, 1, 5),
+  ]);
 
-        {/* Antrean Approval Table */}
+  const submittedCount =
+    opnameSummary.find((s) => s.status === "SUBMITTED")?.count ?? 0;
+  const approvedCount =
+    opnameSummary.find((s) => s.status === "APPROVED")?.count ?? 0;
+
+  const movementBadgeClass: Record<string, string> = {
+    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
+    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
+    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
+    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+          Status Pengawasan & Antrean
+        </h2>
+        <p className="text-xs text-slate-500">
+          Data kondisi persediaan kritis dan dokumen opname yang memerlukan tindakan.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Stok Menipis (Kritis)"
+          value={counts.lowStockCount}
+          description="Item di bawah batas minimum"
+          icon={AlertTriangle}
+          variant={counts.lowStockCount > 0 ? "warning" : "default"}
+        />
+        <MetricCard
+          title="Total Persediaan"
+          value={counts.totalInventoryQty.toLocaleString()}
+          description="Total unit tercatat di sistem"
+          icon={Boxes}
+          variant="default"
+        />
+        <MetricCard
+          title="Menunggu Keputusan"
+          value={submittedCount}
+          description="Dokumen opname siap direview"
+          icon={Clock}
+          variant={submittedCount > 0 ? "warning" : "default"}
+          badge={submittedCount > 0 ? "Perlu Review" : "Nihil"}
+        />
+        <MetricCard
+          title="Opname Disetujui"
+          value={approvedCount}
+          description="Telah selesai & saldo disesuaikan"
+          icon={FileCheck2}
+          variant="success"
+        />
+      </div>
+      {/* Antrean Approval Table */}
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
@@ -442,6 +453,27 @@ export default async function SupervisorWorkflowPage() {
             )}
           </div>
         </div>
+    </div>
+  );
+}
+
+/** Static-safe placeholder shown while the live supervision data streams in. */
+function SupervisionStatusSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-4 w-64 rounded bg-slate-200" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-24 rounded-2xl border border-slate-200 bg-white"
+          />
+        ))}
+      </div>
+      <div className="h-40 rounded-2xl border border-slate-200 bg-white" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
+        <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
       </div>
     </div>
   );

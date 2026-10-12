@@ -18,8 +18,10 @@ import {
     Plus,
 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-
+// Rendering mode is decided by the Cache Components strategy (see
+// next.config.ts + docs/static-rendering.md). The legacy `dynamic` route segment
+// config is intentionally omitted — Cache Components rejects it. The form reads
+// the session and the live warehouse list, so it renders at request time.
 export default async function CreateStockOpnamePage() {
     const user = await getCurrentUser();
 

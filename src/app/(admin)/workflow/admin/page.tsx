@@ -1,8 +1,6 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/Auth";
-import { hasPermission } from "@/lib/Permissions";
+import { requirePagePermission } from "@/lib/Auth";
 import {
   getDashboardCounts,
   getRecentMovements,
@@ -27,7 +25,17 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+// ── Hybrid rendering note ────────────────────────────────────────────────────
+//
+// This page is the internal "how to run the system" guide: pure documentation
+// that only changes when the app itself ships a new version, so it is rendered
+// ONCE at build time and served from the static payload (no server memory per
+// request, instant open).
+//
+// Everything that changes at runtime — the master-data metrics and the recent
+// movement feed — has been moved into <LiveFoundationStatus /> below, which is
+// wrapped in <Suspense> and streams in at request time without invalidating the
+// static shell. See docs/static-rendering.md.
 
 export const metadata = {
   title: "Alur Tata Kelola Admin - Manajemen Inventori",
@@ -36,19 +44,9 @@ export const metadata = {
 };
 
 export default async function AdminWorkflowPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
-
-  if (user.role !== "ADMIN") {
-    redirect("/");
-  }
-
-  const [counts, recentMovements] = await Promise.all([
-    getDashboardCounts(),
-    getRecentMovements(5),
-  ]);
+  // Server-side authorization boundary (ADMIN only — also enforced by the
+  // route-group layout). Runs at request time through the AuthShell boundary.
+  await requirePagePermission("USER_VIEW");
 
   const steps = [
     {
@@ -88,14 +86,6 @@ export default async function AdminWorkflowPage() {
       color: "text-slate-700 bg-slate-100 border-slate-200",
     },
   ];
-
-  const movementBadgeClass: Record<string, string> = {
-    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
-    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
-    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
-    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 pb-12">
@@ -210,50 +200,77 @@ export default async function AdminWorkflowPage() {
         </div>
       </div>
 
-      {/* ── 4. Ringkasan Fondasi Sistem (Live Data) ── */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-            Status Master Data & Fondasi
-          </h2>
-          <p className="text-xs text-slate-500">
-            Ringkasan entitas data master dan kepatuhan sistem terkini.
-          </p>
-        </div>
+      {/* ── 4. Ringkasan Fondasi Sistem (Live Data, streamed) ── */}
+      <Suspense fallback={<FoundationStatusSkeleton />}>
+        <LiveFoundationStatus />
+      </Suspense>
+    </div>
+  );
+}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard
-            title="Katalog SKU Aktif"
-            value={counts.activeItems}
-            description="Item barang siap transaksi"
-            icon={Package}
-            variant="default"
-          />
-          <MetricCard
-            title="Gudang & Lokasi"
-            value={counts.activeWarehouses}
-            description={`${counts.activeLocations} zona rak terdaftar`}
-            icon={Warehouse}
-            variant="default"
-          />
-          <MetricCard
-            title="Kebijakan Min. Stock"
-            value={counts.lowStockCount}
-            description="Item di bawah batas minimum"
-            icon={SlidersHorizontal}
-            variant={counts.lowStockCount > 0 ? "warning" : "default"}
-          />
-          <MetricCard
-            title="Volume Persediaan"
-            value={counts.totalInventoryQty.toLocaleString()}
-            description="Total unit stok tercatat"
-            icon={Layers}
-            variant="success"
-          />
-        </div>
+/**
+ * Runtime half of this route: unchanged live metrics.
+ * Runs per request behind the Suspense boundary above, so the guide itself
+ * stays static while the numbers stay accurate.
+ */
+async function LiveFoundationStatus() {
+  const [counts, recentMovements] = await Promise.all([
+    getDashboardCounts(),
+    getRecentMovements(5),
+  ]);
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Master Data Menu */}
+  const movementBadgeClass: Record<string, string> = {
+    RECEIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    ISSUE: "bg-orange-50 text-orange-700 border-orange-200",
+    TRANSFER: "bg-blue-50 text-blue-700 border-blue-200",
+    RETURN: "bg-purple-50 text-purple-700 border-purple-200",
+    ADJUSTMENT: "bg-amber-50 text-amber-700 border-amber-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+          Status Master Data & Fondasi
+        </h2>
+        <p className="text-xs text-slate-500">
+          Ringkasan entitas data master dan kepatuhan sistem terkini.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Katalog SKU Aktif"
+          value={counts.activeItems}
+          description="Item barang siap transaksi"
+          icon={Package}
+          variant="default"
+        />
+        <MetricCard
+          title="Gudang & Lokasi"
+          value={counts.activeWarehouses}
+          description={`${counts.activeLocations} zona rak terdaftar`}
+          icon={Warehouse}
+          variant="default"
+        />
+        <MetricCard
+          title="Kebijakan Min. Stock"
+          value={counts.lowStockCount}
+          description="Item di bawah batas minimum"
+          icon={SlidersHorizontal}
+          variant={counts.lowStockCount > 0 ? "warning" : "default"}
+        />
+        <MetricCard
+          title="Volume Persediaan"
+          value={counts.totalInventoryQty.toLocaleString()}
+          description="Total unit stok tercatat"
+          icon={Layers}
+          variant="success"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Master Data Menu */}
           <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
               <ShieldCheck className="h-4 w-4 text-blue-600" />
@@ -350,7 +367,27 @@ export default async function AdminWorkflowPage() {
               </div>
             )}
           </div>
-        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Static-safe placeholder shown while the metrics stream in. */
+function FoundationStatusSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-4 w-56 rounded bg-slate-200" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-24 rounded-2xl border border-slate-200 bg-white"
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="h-56 rounded-2xl border border-slate-200 bg-white" />
+        <div className="h-56 rounded-2xl border border-slate-200 bg-white" />
       </div>
     </div>
   );

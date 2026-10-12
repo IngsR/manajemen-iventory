@@ -13,8 +13,11 @@ import { requirePagePermission } from "@/lib/Auth";
 import { getRecentAuditLogs } from "@/services/AuditLogService";
 import { Activity, Clock, ShieldAlert, User } from "lucide-react";
 
-export const dynamic = "force-dynamic";
-
+// Rendering mode is decided by the Cache Components strategy (see
+// next.config.ts + docs/static-rendering.md): the audit trail reads the request
+// session and the live ledger, so it is rendered at request time and streams in
+// behind the AuthShell's Suspense boundary. The legacy `dynamic` route segment
+// config is intentionally omitted — Cache Components rejects it.
 export default async function AuditPage() {
   // Server-side authorization boundary: only ADMIN/SUPERVISOR hold AUDIT_VIEW.
   // Unauthorized roles are redirected server-side and never reach the render.
