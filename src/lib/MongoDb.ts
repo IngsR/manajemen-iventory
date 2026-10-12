@@ -1,14 +1,16 @@
-import { MongoClient, Db, ServerApiVersion } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/manajemen_inventory';
+function getMongoUri(): string {
+    return (
+        process.env.MONGODB_URI_MONGODB_URI ||
+        process.env.MONGODB_URI ||
+        'mongodb://127.0.0.1:27017/manajemen_inventory'
+    );
+}
+
 const defaultDbName = process.env.MONGODB_DB_NAME || 'manajemen_inventory';
 
 const options = {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
     connectTimeoutMS: 5000,
     serverSelectionTimeoutMS: 5000,
 };
@@ -16,43 +18,36 @@ const options = {
 declare global {
     // eslint-disable-next-line no-var
     var _mongoClientPromise: Promise<MongoClient> | undefined;
+    // eslint-disable-next-line no-var
+    var _mongoClientUri: string | undefined;
 }
 
-let clientPromise: Promise<MongoClient>;
-
-if (process.env.NODE_ENV === 'development') {
-    // In development mode, use a global variable so that the value
-    // is preserved across module reloads caused by HMR (Hot Module Replacement).
-    if (!global._mongoClientPromise) {
-        const client = new MongoClient(uri, options);
-        global._mongoClientPromise = client.connect();
-    }
-    clientPromise = global._mongoClientPromise;
-} else {
-    // In production mode, it's best to not use a global variable.
-    const client = new MongoClient(uri, options);
-    clientPromise = client.connect();
-}
-
-/**
- * Returns the connected MongoClient promise.
- */
 export async function getMongoClient(): Promise<MongoClient> {
-    return clientPromise;
+    const uri = getMongoUri();
+
+    if (process.env.NODE_ENV === 'development') {
+        if (!global._mongoClientPromise || global._mongoClientUri !== uri) {
+            global._mongoClientUri = uri;
+            const client = new MongoClient(uri, options);
+            global._mongoClientPromise = client.connect().catch((err) => {
+                // Reset cache on error so next attempt can retry fresh
+                global._mongoClientPromise = undefined;
+                global._mongoClientUri = undefined;
+                throw err;
+            });
+        }
+        return global._mongoClientPromise;
+    }
+
+    const client = new MongoClient(uri, options);
+    return client.connect();
 }
 
-/**
- * Returns the MongoDB Database instance.
- * @param dbName Optional database name override
- */
 export async function getMongoDb(dbName?: string): Promise<Db> {
     const client = await getMongoClient();
-    return client.db(dbName || defaultDbName);
+    return client.db(dbName || process.env.MONGODB_DB_NAME || defaultDbName);
 }
 
-/**
- * Pings the MongoDB instance to verify connectivity.
- */
 export async function pingMongoDb(): Promise<{
     success: boolean;
     latencyMs?: number;
