@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/Auth';
+import { DashboardGate } from '@/components/navigation/DashboardGate';
 import {
     getDashboardCounts,
     getRecentMovements,
@@ -24,20 +23,15 @@ import {
     Zap,
 } from 'lucide-react';
 
-export default async function PetugasDashboardPage() {
-    const user = await getCurrentUser();
-    if (!user) {
-        redirect('/login');
-    }
-    if (user.role !== 'PETUGAS' && user.role !== 'ADMIN') {
-        redirect('/');
-    }
+// ── Hybrid rendering ─────────────────────────────────────────────────────────
+//
+// The shell of this page (header, action grid, quick-transaction terminal) is
+// static: it renders with no session/data access and paints instantly. Only the
+// live KPI cards and the recent-transaction feed read the session + database, so
+// they sit behind <DashboardGate /> (a Suspense boundary) and stream in per
+// request — see src/components/navigation/DashboardGate.tsx.
 
-    const [counts, recentMovements] = await Promise.all([
-        getDashboardCounts(),
-        getRecentMovements(8),
-    ]);
-
+export default function PetugasDashboardPage() {
     const operations = [
         {
             title: 'Penerimaan (Receive)',
@@ -114,30 +108,13 @@ export default async function PetugasDashboardPage() {
                 </div>
             </div>
 
-            {/* Apple Silicon Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                <MetricCard
-                    title="Katalog Barang Tersedia"
-                    value={counts.activeItems}
-                    description="Item aktif yang dapat ditransaksikan"
-                    icon={Package}
-                    variant="default"
-                />
-                <MetricCard
-                    title="Total Stok Fisik Gudang"
-                    value={counts.totalInventoryQty.toLocaleString()}
-                    description="Kuantitas terdaftar di seluruh lokasi"
-                    icon={Boxes}
-                    variant="success"
-                />
-                <MetricCard
-                    title="Fasilitas & Lokasi"
-                    value={`${counts.activeWarehouses} Gudang`}
-                    description={`${counts.activeLocations} lokasi/rak terdaftar`}
-                    icon={Warehouse}
-                    variant="default"
-                />
-            </div>
+            {/* KPI cards + live feed — session-gated, streamed behind Suspense */}
+            <DashboardGate
+                allow={['PETUGAS', 'ADMIN']}
+                skeleton={<PetugasLiveSkeleton />}
+            >
+                <PetugasLive />
+            </DashboardGate>
 
             {/* Integrated Fast Transaction Terminal */}
             <QuickTransactionTerminal />
@@ -183,6 +160,43 @@ export default async function PetugasDashboardPage() {
                         );
                     })}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+/** Live half: KPI cards + recent-transaction feed (session-gated, streamed). */
+async function PetugasLive() {
+    const [counts, recentMovements] = await Promise.all([
+        getDashboardCounts(),
+        getRecentMovements(8),
+    ]);
+
+    return (
+        <>
+            {/* Apple Silicon Metric Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <MetricCard
+                    title="Katalog Barang Tersedia"
+                    value={counts.activeItems}
+                    description="Item aktif yang dapat ditransaksikan"
+                    icon={Package}
+                    variant="default"
+                />
+                <MetricCard
+                    title="Total Stok Fisik Gudang"
+                    value={counts.totalInventoryQty.toLocaleString()}
+                    description="Kuantitas terdaftar di seluruh lokasi"
+                    icon={Boxes}
+                    variant="success"
+                />
+                <MetricCard
+                    title="Fasilitas & Lokasi"
+                    value={`${counts.activeWarehouses} Gudang`}
+                    description={`${counts.activeLocations} lokasi/rak terdaftar`}
+                    icon={Warehouse}
+                    variant="default"
+                />
             </div>
 
             {/* Recent Transaction Activity Stream */}
@@ -244,6 +258,20 @@ export default async function PetugasDashboardPage() {
                     </div>
                 )}
             </div>
+        </>
+    );
+}
+
+/** Static-safe placeholder for the streaming live half. */
+function PetugasLiveSkeleton() {
+    return (
+        <div className="space-y-6 animate-pulse">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-24 rounded-2xl border border-slate-200 bg-white" />
+                ))}
+            </div>
+            <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
         </div>
     );
 }

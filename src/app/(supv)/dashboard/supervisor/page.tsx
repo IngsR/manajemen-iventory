@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/Auth';
+import { DashboardGate } from '@/components/navigation/DashboardGate';
 import {
     getDashboardCounts,
     getLowStockItems,
@@ -25,15 +24,25 @@ import {
     Check,
 } from 'lucide-react';
 
-export default async function SupervisorDashboardPage() {
-    const user = await getCurrentUser();
-    if (!user) {
-        redirect('/login');
-    }
-    if (user.role !== 'SUPERVISOR' && user.role !== 'ADMIN') {
-        redirect('/');
-    }
+// ── Hybrid rendering ─────────────────────────────────────────────────────────
+//
+// The whole dashboard body is live data, so the page is a synchronous shell that
+// immediately hands off to <DashboardGate />. The gate verifies the session (and
+// the SUPERVISOR/ADMIN role) and streams the metrics in a Suspense boundary,
+// which keeps this route instant instead of blocking on the session read.
+// See src/components/navigation/DashboardGate.tsx.
+export default function SupervisorDashboardPage() {
+    return (
+        <DashboardGate
+            allow={['SUPERVISOR', 'ADMIN']}
+            skeleton={<SupervisorDashboardSkeleton />}
+        >
+            <SupervisorDashboardContent />
+        </DashboardGate>
+    );
+}
 
+async function SupervisorDashboardContent() {
     const [counts, lowStockItems, recentMovements, opnameSummary, pendingApprovals] =
         await Promise.all([
             getDashboardCounts(),
@@ -318,6 +327,28 @@ export default async function SupervisorDashboardPage() {
                         </div>
                     )}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+/** Static-safe placeholder shown while the live dashboard content streams in. */
+function SupervisorDashboardSkeleton() {
+    return (
+        <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto animate-pulse">
+            <div className="pb-2 border-b border-slate-200/60 space-y-2">
+                <div className="h-5 w-48 rounded bg-slate-200" />
+                <div className="h-3 w-72 rounded bg-slate-100" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-24 rounded-2xl border border-slate-200 bg-white" />
+                ))}
+            </div>
+            <div className="h-56 rounded-2xl border border-slate-200 bg-white" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
+                <div className="h-48 rounded-2xl border border-slate-200 bg-white" />
             </div>
         </div>
     );
