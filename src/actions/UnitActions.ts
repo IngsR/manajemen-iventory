@@ -3,7 +3,8 @@
 import { ObjectId } from 'mongodb';
 import { getUnitCollection, UnitDoc } from '@/models/UnitModel';
 import { getItemCollection } from '@/models/ItemModel';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { StaticTags } from '@/lib/StaticData';
 import { ActionResponse } from './CategoryActions';
 import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
@@ -68,7 +69,11 @@ export async function createUnitAction(input: {
             details: { code, name },
         });
 
-        try { revalidatePath('/units'); } catch {}
+        // Hybrid rendering: refresh the cached master-data entry instead of the route
+        // (see src/lib/StaticData.ts).
+        updateTag(StaticTags.UNITS);
+        // The item catalogue embeds unit codes, so its cached labels may change too.
+        updateTag(StaticTags.ITEMS);
         return {
             success: true,
             data: result.insertedId.toHexString(),
@@ -140,7 +145,8 @@ export async function updateUnitAction(
             details: { before, after },
         });
 
-        try { revalidatePath('/units'); } catch {}
+        updateTag(StaticTags.UNITS);
+        updateTag(StaticTags.ITEMS);
         return { success: true, message: 'Satuan berhasil diperbarui.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
@@ -197,7 +203,8 @@ export async function deleteUnitAction(id: string): Promise<ActionResponse> {
             resourceId: id,
         });
 
-        try { revalidatePath('/units'); } catch {}
+        updateTag(StaticTags.UNITS);
+        updateTag(StaticTags.ITEMS);
         return { success: true, message: 'Satuan berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };

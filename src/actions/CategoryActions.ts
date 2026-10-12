@@ -3,7 +3,8 @@
 import { ObjectId } from 'mongodb';
 import { getCategoryCollection, CategoryDoc } from '@/models/CategoryModel';
 import { getItemCollection } from '@/models/ItemModel';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { StaticTags } from '@/lib/StaticData';
 import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
 
@@ -77,7 +78,12 @@ export async function createCategoryAction(input: {
             details: { code, name },
         });
 
-        try { revalidatePath('/categories'); } catch {}
+        // Hybrid rendering: master data is cached under a tag (see StaticData.ts),
+        // so a mutation refreshes exactly that entry instead of invalidating the
+        // route. `updateTag` is the Server-Action variant: the caller's next read
+        // is guaranteed fresh (read-your-own-writes) while every other request
+        // keeps being served from the static payload.
+        updateTag(StaticTags.CATEGORIES);
         return {
             success: true,
             data: result.insertedId.toHexString(),
@@ -155,7 +161,7 @@ export async function updateCategoryAction(
             details: { before, after },
         });
 
-        try { revalidatePath('/categories'); } catch {}
+        updateTag(StaticTags.CATEGORIES);
         return { success: true, message: 'Kategori berhasil diperbarui.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
@@ -212,7 +218,7 @@ export async function deleteCategoryAction(id: string): Promise<ActionResponse> 
             resourceId: id,
         });
 
-        try { revalidatePath('/categories'); } catch {}
+        updateTag(StaticTags.CATEGORIES);
         return { success: true, message: 'Kategori berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };

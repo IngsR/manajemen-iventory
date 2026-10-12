@@ -4,7 +4,8 @@ import { ObjectId, Filter } from 'mongodb';
 import { getLocationCollection, LocationDoc, LocationType } from '@/models/LocationModel';
 import { getWarehouseCollection } from '@/models/WarehouseModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { StaticTags } from '@/lib/StaticData';
 import { ActionResponse } from './CategoryActions';
 import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
@@ -104,7 +105,9 @@ export async function createLocationAction(input: {
             details: { warehouseId: input.warehouseId, code, name, type: input.type },
         });
 
-        try { revalidatePath('/locations'); } catch {}
+        // Hybrid rendering: invalidate the cached master-data entry instead of the
+        // route (see StaticData.ts).
+        updateTag(StaticTags.LOCATIONS);
         return {
             success: true,
             data: result.insertedId.toHexString(),
@@ -182,7 +185,7 @@ export async function updateLocationAction(
             details: { before, after },
         });
 
-        try { revalidatePath('/locations'); } catch {}
+        updateTag(StaticTags.LOCATIONS);
         return { success: true, message: 'Lokasi berhasil diperbarui.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
@@ -239,7 +242,7 @@ export async function deleteLocationAction(id: string): Promise<ActionResponse> 
             resourceId: id,
         });
 
-        try { revalidatePath('/locations'); } catch {}
+        updateTag(StaticTags.LOCATIONS);
         return { success: true, message: 'Lokasi berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };

@@ -6,7 +6,8 @@ import { getCategoryCollection } from '@/models/CategoryModel';
 import { getUnitCollection } from '@/models/UnitModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
 import { getStockMovementCollection } from '@/models/StockMovementModel';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { StaticTags } from '@/lib/StaticData';
 import { ActionResponse } from './CategoryActions';
 import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
@@ -142,7 +143,9 @@ export async function createItemAction(input: {
             },
         });
 
-        try { revalidatePath('/items'); } catch {}
+        // Hybrid rendering: refresh the cached master-data entry instead of the route
+        // (see src/lib/StaticData.ts).
+        updateTag(StaticTags.ITEMS);
         return {
             success: true,
             data: result.insertedId.toHexString(),
@@ -262,7 +265,7 @@ export async function updateItemAction(
             details: { before, after },
         });
 
-        try { revalidatePath('/items'); } catch {}
+        updateTag(StaticTags.ITEMS);
         return { success: true, message: 'Barang berhasil diperbarui.' };
     } catch (err) {
         if (isAuthError(err)) {
@@ -322,7 +325,7 @@ export async function deleteItemAction(id: string): Promise<ActionResponse> {
                 details: { statusChange: 'INACTIVE (historical transactions exist)' },
             });
 
-            try { revalidatePath('/items'); } catch {}
+            updateTag(StaticTags.ITEMS);
             return {
                 success: true,
                 message: 'Barang memiliki riwayat transaksi mutasi. Barang berhasil dinonaktifkan (INACTIVE) demi integritas audit.',
@@ -355,7 +358,7 @@ export async function deleteItemAction(id: string): Promise<ActionResponse> {
             resourceId: id,
         });
 
-        try { revalidatePath('/items'); } catch {}
+        updateTag(StaticTags.ITEMS);
         return { success: true, message: 'Barang berhasil dihapus / dinonaktifkan.' };
     } catch (err) {
         if (isAuthError(err)) {

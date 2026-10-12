@@ -4,7 +4,8 @@ import { ObjectId } from 'mongodb';
 import { getWarehouseCollection, WarehouseDoc } from '@/models/WarehouseModel';
 import { getLocationCollection } from '@/models/LocationModel';
 import { getStockBalanceCollection } from '@/models/StockBalanceModel';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { StaticTags } from '@/lib/StaticData';
 import { ActionResponse } from './CategoryActions';
 import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
 import { createAuditLog } from '@/services/AuditLogService';
@@ -71,7 +72,11 @@ export async function createWarehouseAction(input: {
             details: { code, name },
         });
 
-        try { revalidatePath('/warehouses'); } catch {}
+        // Hybrid rendering: refresh the cached master-data entry instead of the route
+        // (see src/lib/StaticData.ts).
+        updateTag(StaticTags.WAREHOUSES);
+        // Locations are nested under warehouses, so their cached labels may change too.
+        updateTag(StaticTags.LOCATIONS);
         return {
             success: true,
             data: result.insertedId.toHexString(),
@@ -149,7 +154,8 @@ export async function updateWarehouseAction(
             details: { before, after },
         });
 
-        try { revalidatePath('/warehouses'); } catch {}
+        updateTag(StaticTags.WAREHOUSES);
+        updateTag(StaticTags.LOCATIONS);
         return { success: true, message: 'Gudang berhasil diperbarui.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
@@ -220,7 +226,8 @@ export async function deleteWarehouseAction(id: string): Promise<ActionResponse>
             resourceId: id,
         });
 
-        try { revalidatePath('/warehouses'); } catch {}
+        updateTag(StaticTags.WAREHOUSES);
+        updateTag(StaticTags.LOCATIONS);
         return { success: true, message: 'Gudang berhasil dinonaktifkan / dihapus.' };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message };
