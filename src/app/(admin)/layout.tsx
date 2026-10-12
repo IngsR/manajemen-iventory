@@ -1,6 +1,4 @@
-import { RoleWorkspaceShell } from "@/components/navigation/RoleWorkspaceShell";
-import { getCurrentUser } from "@/lib/Auth";
-import { redirect } from "next/navigation";
+import { AuthShell } from "@/components/navigation/AuthShell";
 
 // ADMIN workspace layout.
 //
@@ -13,16 +11,16 @@ import { redirect } from "next/navigation";
 // requirePermission / hasPermission (src/lib/Auth.ts).
 //
 // Only authentication (must be logged in) is required to render this shell.
-export default async function AdminLayout({
+//
+// Hybrid rendering: this layout is deliberately NOT `async` and never reads the
+// session at its top level — that would make the whole segment request-bound.
+// The shell (header/sidebar) prerenders into the static shell and opens
+// instantly, while AuthShell verifies the session and streams the
+// user-dependent chrome inside a Suspense boundary.
+export default function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  return <RoleWorkspaceShell user={user}>{children}</RoleWorkspaceShell>;
+  return <AuthShell>{children}</AuthShell>;
 }
