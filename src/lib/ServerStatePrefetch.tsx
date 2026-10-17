@@ -3,39 +3,35 @@ import "server-only";
 import { getQueryClient } from "@/components/providers/getQueryClient";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import type { ServerStateSnapshot } from "./ServerStateKeys";
+import type { QueryClient } from "@tanstack/react-query";
 
 /**
- * A request-scoped React Query client plus the props that hydrate the browser
- * cache from it. Always call this INSIDE a Server Component (it reads request
- * context via `getQueryClient`).
+ * Returns a request-scoped React Query client. Always call this INSIDE a
+ * Server Component (it reads request context via `getQueryClient`).
+ *
+ * Pass the returned `queryClient` to `ServerStateBoundary` so that
+ * dehydration happens AFTER all `prefetchQuery` calls have completed.
  */
-export async function createServerStateBoundary(): Promise<{
+export function createServerStateBoundary(): {
   queryClient: ReturnType<typeof getQueryClient>;
-  boundary: { state: ServerStateSnapshot };
-}> {
+} {
   const queryClient = getQueryClient();
-
-  // `dehydrate` is synchronous; awaiting it would only add a microtask. The
-  // snapshot happens here, so prefetch BEFORE calling this to have the payload
-  // included — or render <ServerStateBoundary> so it dehydrates at render time.
-  const state = dehydrate(queryClient) as ServerStateSnapshot;
-
-  return { queryClient, boundary: { state } };
+  return { queryClient };
 }
 
 /**
  * Renders the boundary that hands a dehydrated cache to the client provider.
- * Kept as a separate component so a page can wrap only the subtree that needs
- * server-state (the rest of the route stays a pure RSC payload).
+ * Dehydration happens at render time so all prior `prefetchQuery` calls are
+ * included in the snapshot.
  */
 export function ServerStateBoundary({
-  state,
+  queryClient,
   children,
 }: {
-  state: ServerStateSnapshot;
+  queryClient: QueryClient;
   children: ReactNode;
 }) {
+  const state = dehydrate(queryClient);
   return (
     <HydrationBoundary state={state as never}>{children}</HydrationBoundary>
   );
