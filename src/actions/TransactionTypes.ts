@@ -1,9 +1,5 @@
 /**
- * Shared response type for all inventory transaction server actions.
+ * @deprecated Import langsung dari './types' untuk response types yang terbaru.
+ * File ini dipertahankan untuk backward compatibility.
  */
-export interface TransactionResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  code?: string;
-}
+export type { TransactionResponse } from './types';
