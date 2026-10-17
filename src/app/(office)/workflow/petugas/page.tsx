@@ -107,7 +107,13 @@ export default async function OfficerWorkflowPage() {
             Alur Kerja Operasional Gudang
           </h1>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-3xl">
-            Anda adalah <strong className="text-slate-900 font-semibold">pelaksana lapangan</strong>. Setiap pergerakan barang fisik Anda catat sebagai transaksi resmi, mulai dari barang masuk sampai penghitungan fisik yang diajukan ke Supervisor.
+            Anda adalah{" "}
+            <strong className="text-slate-900 font-semibold">
+              pelaksana lapangan
+            </strong>
+            . Setiap pergerakan barang fisik Anda catat sebagai transaksi resmi,
+            mulai dari barang masuk sampai penghitungan fisik yang diajukan ke
+            Supervisor.
           </p>
         </div>
 
@@ -131,10 +137,21 @@ export default async function OfficerWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Menerima dan memeriksa fisik barang masuk dari supplier (Receive).</li>
-            <li>Menata dan memindahkan barang ke rak penyimpanan (Transfer/Putaway).</li>
-            <li>Mencatat pengeluaran barang (Issue) dan pengembalian barang (Return).</li>
-            <li>Melakukan penghitungan fisik gudang dan memasukkan data Stock Opname.</li>
+            <li>
+              Menerima dan memeriksa fisik barang masuk dari supplier (Receive).
+            </li>
+            <li>
+              Menata dan memindahkan barang ke rak penyimpanan
+              (Transfer/Putaway).
+            </li>
+            <li>
+              Mencatat pengeluaran barang (Issue) dan pengembalian barang
+              (Return).
+            </li>
+            <li>
+              Melakukan penghitungan fisik gudang dan memasukkan data Stock
+              Opname.
+            </li>
           </ul>
         </div>
 
@@ -146,9 +163,17 @@ export default async function OfficerWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Menyetujui (Approve) atau menolak (Reject) Stock Opname — wewenang Supervisor.</li>
-            <li>Mengubah data master barang, gudang, dan satuan — wewenang Admin.</li>
-            <li>Mengubah saldo stok langsung secara manual di luar transaksi resmi.</li>
+            <li>
+              Menyetujui (Approve) atau menolak (Reject) Stock Opname — wewenang
+              Supervisor.
+            </li>
+            <li>
+              Mengubah data master barang, gudang, dan satuan — wewenang Admin.
+            </li>
+            <li>
+              Mengubah saldo stok langsung secara manual di luar transaksi
+              resmi.
+            </li>
           </ul>
         </div>
       </div>
@@ -160,7 +185,8 @@ export default async function OfficerWorkflowPage() {
             Tahapan Siklus Harian
           </h2>
           <p className="text-xs text-slate-500">
-            Ringkasan alur kerja dari fisik di lapangan hingga tersimpan di sistem.
+            Ringkasan alur kerja dari fisik di lapangan hingga tersimpan di
+            sistem.
           </p>
         </div>
 
@@ -280,88 +306,116 @@ async function LiveOperationalStatus() {
         />
       </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Quick Access Menu */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <Inbox className="h-4 w-4 text-emerald-600" />
-              <h3 className="text-sm font-bold text-slate-900">Menu Transaksi Cepat</h3>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {[
-                { label: "Penerimaan", href: "/inventory/receive", icon: ArrowDownToLine },
-                { label: "Transfer Rak", href: "/inventory/transfer", icon: ArrowLeftRight },
-                { label: "Pengeluaran", href: "/inventory/issue", icon: ArrowUpFromLine },
-                { label: "Retur Barang", href: "/inventory/return", icon: RotateCcw },
-                { label: "Adjustment", href: "/inventory/adjustment", icon: SlidersHorizontal },
-                { label: "Stock Opname", href: "/inventory/stock-opname", icon: ClipboardPen },
-              ].map((item) => {
-                const ItemIcon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 text-xs font-semibold text-slate-700 transition-colors"
-                  >
-                    <ItemIcon className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Quick Access Menu */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <Inbox className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-bold text-slate-900">
+              Menu Transaksi Cepat
+            </h3>
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {[
+              {
+                label: "Penerimaan",
+                href: "/inventory/receive",
+                icon: ArrowDownToLine,
+              },
+              {
+                label: "Transfer Rak",
+                href: "/inventory/transfer",
+                icon: ArrowLeftRight,
+              },
+              {
+                label: "Pengeluaran",
+                href: "/inventory/issue",
+                icon: ArrowUpFromLine,
+              },
+              {
+                label: "Retur Barang",
+                href: "/inventory/return",
+                icon: RotateCcw,
+              },
+              {
+                label: "Adjustment",
+                href: "/inventory/adjustment",
+                icon: SlidersHorizontal,
+              },
+              {
+                label: "Stock Opname",
+                href: "/inventory/stock-opname",
+                icon: ClipboardPen,
+              },
+            ].map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-2 p-2.5 rounded-xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/40 text-xs font-semibold text-slate-700 transition-colors"
+                >
+                  <ItemIcon className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900">Transaksi Terakhir</h3>
-              </div>
-              <Link href="/reports/movements">
-                <span className="text-xs font-semibold text-emerald-700 hover:underline">
-                  Semua Riwayat →
-                </span>
-              </Link>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-slate-900">
+                Transaksi Terakhir
+              </h3>
             </div>
-            {recentMovements.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                Belum ada transaksi barang yang tercatat.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {recentMovements.map((m) => (
-                  <div
-                    key={m._id}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
-                      >
-                        {m.type}
-                      </Badge>
-                      <span className="font-mono font-bold text-slate-800">
-                        {m.sku}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-extrabold text-slate-900">
-                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                      </span>
-                      <span className="block text-[10px] text-slate-400">
-                        {new Date(m.timestamp).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <Link href="/reports/movements">
+              <span className="text-xs font-semibold text-emerald-700 hover:underline">
+                Semua Riwayat →
+              </span>
+            </Link>
           </div>
+          {recentMovements.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">
+              Belum ada transaksi barang yang tercatat.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {recentMovements.map((m) => (
+                <div
+                  key={m._id}
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
+                    >
+                      {m.type}
+                    </Badge>
+                    <span className="font-mono font-bold text-slate-800">
+                      {m.sku}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-extrabold text-slate-900">
+                      {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                      {new Date(m.timestamp).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

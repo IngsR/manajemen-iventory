@@ -1,6 +1,6 @@
-import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/Auth';
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/Auth";
 
 /**
  * Root entry point.
@@ -12,11 +12,11 @@ import { getCurrentUser } from '@/lib/Auth';
  * route is served from the static payload instead of being rendered per request.
  */
 export default function HomePage() {
-    return (
-        <Suspense fallback={<RouteFallback />}>
-            <RoleRedirector />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <RoleRedirector />
+    </Suspense>
+  );
 }
 
 /**
@@ -25,31 +25,31 @@ export default function HomePage() {
  * for the instant the streamed chunk resolves.
  */
 async function RoleRedirector() {
-    const user = await getCurrentUser();
+  const user = await getCurrentUser();
 
-    if (user) {
-        if (user.role === 'ADMIN') {
-            redirect('/dashboard/admin');
-        } else if (user.role === 'SUPERVISOR') {
-            redirect('/dashboard/supervisor');
-        } else if (user.role === 'PETUGAS') {
-            redirect('/dashboard/petugas');
-        }
+  if (user) {
+    if (user.role === "ADMIN") {
+      redirect("/dashboard/admin");
+    } else if (user.role === "SUPERVISOR") {
+      redirect("/dashboard/supervisor");
+    } else if (user.role === "PETUGAS") {
+      redirect("/dashboard/petugas");
     }
+  }
 
-    redirect('/login');
+  redirect("/login");
 
-    return <RouteFallback />;
+  return <RouteFallback />;
 }
 
 /** Neutral placeholder — visible only for the instant the redirect resolves. */
 function RouteFallback() {
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-            <div className="flex flex-col items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-slate-200 animate-pulse" />
-                <div className="h-3 w-32 rounded bg-slate-200 animate-pulse" />
-            </div>
-        </div>
-    );
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-slate-200 animate-pulse" />
+        <div className="h-3 w-32 rounded bg-slate-200 animate-pulse" />
+      </div>
+    </div>
+  );
 }

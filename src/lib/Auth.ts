@@ -1,138 +1,157 @@
-import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { ObjectId } from 'mongodb';
-import { getUserCollection, UserDoc } from '@/models/UserModel';
-import { Permission, hasPermission } from './Permissions';
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { ObjectId } from "mongodb";
+import { getUserCollection, UserDoc } from "@/models/UserModel";
+import { Permission, hasPermission } from "./Permissions";
 
-const SESSION_COOKIE_NAME = 'session_token';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'inventory-secret-key-development-minimum-32-chars-long';
+const SESSION_COOKIE_NAME = "session_token";
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  "inventory-secret-key-development-minimum-32-chars-long";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export class AuthError extends Error {
-    constructor(
-        public code: 'UNAUTHORIZED' | 'FORBIDDEN',
-        message: string
-    ) {
-        super(message);
-        this.name = 'AuthError';
-    }
+  constructor(
+    public code: "UNAUTHORIZED" | "FORBIDDEN",
+    message: string,
+  ) {
+    super(message);
+    this.name = "AuthError";
+  }
 }
 
 export function isAuthError(error: unknown): error is AuthError {
-    return error instanceof AuthError;
+  return error instanceof AuthError;
 }
 
 export interface SessionPayload {
-    userId: string;
-    email: string;
-    role: string;
-    name: string;
-    exp: number;
+  userId: string;
+  email: string;
+  role: string;
+  name: string;
+  exp: number;
 }
 
 // ── Password Hashing ─────────────────────────────────────────────────────────
 
 export async function hashPassword(plain: string): Promise<string> {
-    return bcrypt.hash(plain, 10);
+  return bcrypt.hash(plain, 10);
 }
 
-export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(plain, hash);
+export async function verifyPassword(
+  plain: string,
+  hash: string,
+): Promise<boolean> {
+  return bcrypt.compare(plain, hash);
 }
 
 // ── Token Signing & Verification (Node crypto HMAC-SHA256) ───────────────────
 
 function base64UrlEncode(str: string): string {
-    return Buffer.from(str)
-        .toString('base64')
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
+  return Buffer.from(str)
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 }
 
 function base64UrlDecode(str: string): string {
-    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) {
-        base64 += '=';
-    }
-    return Buffer.from(base64, 'base64').toString('utf8');
+  let base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (base64.length % 4) {
+    base64 += "=";
+  }
+  return Buffer.from(base64, "base64").toString("utf8");
 }
 
 export function signToken(payload: SessionPayload): string {
-    const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const body = base64UrlEncode(JSON.stringify(payload));
-    const hmac = crypto.createHmac('sha256', SESSION_SECRET);
-    hmac.update(`${header}.${body}`);
-    const signature = hmac.digest('base64url');
-    return `${header}.${body}.${signature}`;
+  const header = base64UrlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const body = base64UrlEncode(JSON.stringify(payload));
+  const hmac = crypto.createHmac("sha256", SESSION_SECRET);
+  hmac.update(`${header}.${body}`);
+  const signature = hmac.digest("base64url");
+  return `${header}.${body}.${signature}`;
 }
 
 export function verifyToken(token: string): SessionPayload | null {
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
 
-        const [header, body, signature] = parts;
-        const hmac = crypto.createHmac('sha256', SESSION_SECRET);
-        hmac.update(`${header}.${body}`);
-        const expectedSignature = hmac.digest('base64url');
+    const [header, body, signature] = parts;
+    const hmac = crypto.createHmac("sha256", SESSION_SECRET);
+    hmac.update(`${header}.${body}`);
+    const expectedSignature = hmac.digest("base64url");
 
-        if (signature !== expectedSignature) return null;
+    if (signature !== expectedSignature) return null;
 
-        const payload: SessionPayload = JSON.parse(base64UrlDecode(body));
-        if (Date.now() >= payload.exp * 1000) return null;
+    const payload: SessionPayload = JSON.parse(base64UrlDecode(body));
+    if (Date.now() >= payload.exp * 1000) return null;
 
-        return payload;
-    } catch {
-        return null;
-    }
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 // ── Cookie Helpers ───────────────────────────────────────────────────────────
 
 export async function setSessionCookie(token: string): Promise<void> {
-    const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: SESSION_MAX_AGE_SECONDS,
-    });
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  });
 }
 
 export async function clearSessionCookie(): Promise<void> {
-    const cookieStore = await cookies();
-    try {
-        cookieStore.delete(SESSION_COOKIE_NAME);
-    } catch {
-        // Fallback for older Next / edge context
-    }
-    cookieStore.set(SESSION_COOKIE_NAME, '', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 0,
-        expires: new Date(0),
-    });
+  const cookieStore = await cookies();
+  try {
+    cookieStore.delete(SESSION_COOKIE_NAME);
+  } catch {
+    // Fallback for older Next / edge context
+  }
+  cookieStore.set(SESSION_COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
 }
 
 // ── Session & User Verification ──────────────────────────────────────────────
 
-export async function getCurrentUser(explicitToken?: string): Promise<UserDoc | null> {
+// `cache()` = satu kali per request, bukan satu kali per pemanggil. Layout
+// (AuthShell), gate, page dan tiap server action memanggil ini, jadi tanpa cache
+// satu navigasi membayar cookie-parse + HMAC + findOne berulang kali.
+//
+// Fallback: `React.cache` hanya ada di server runtime React. Skrip tsx (test/seed)
+// mengimpor file ini di luar runtime itu, jadi di sana cache-nya tidak tersedia —
+// dan memang tidak dibutuhkan (satu proses, tanpa request scope).
+const perRequest =
+  typeof cache === "function"
+    ? cache
+    : <T extends (...args: never[]) => unknown>(fn: T): T => fn;
+
+export const getCurrentUser = perRequest(
+  async (explicitToken?: string): Promise<UserDoc | null> => {
     let token = explicitToken;
 
     if (!token) {
-        try {
-            const cookieStore = await cookies();
-            token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-        } catch {
-            // Not in Next.js request context (e.g. standalone test script)
-            return null;
-        }
+      try {
+        const cookieStore = await cookies();
+        token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+      } catch {
+        // Not in Next.js request context (e.g. standalone test script)
+        return null;
+      }
     }
 
     if (!token) return null;
@@ -143,33 +162,37 @@ export async function getCurrentUser(explicitToken?: string): Promise<UserDoc | 
     const users = await getUserCollection();
     const user = await users.findOne({ _id: new ObjectId(payload.userId) });
 
-    if (!user || user.status !== 'ACTIVE') {
-        return null;
+    if (!user || user.status !== "ACTIVE") {
+      return null;
     }
 
     return user;
-}
+  },
+) as (explicitToken?: string) => Promise<UserDoc | null>;
 
 export async function requireAuth(explicitToken?: string): Promise<UserDoc> {
-    const user = await getCurrentUser(explicitToken);
-    if (!user) {
-        throw new AuthError('UNAUTHORIZED', 'Silakan login terlebih dahulu untuk mengakses fitur ini.');
-    }
-    return user;
+  const user = await getCurrentUser(explicitToken);
+  if (!user) {
+    throw new AuthError(
+      "UNAUTHORIZED",
+      "Silakan login terlebih dahulu untuk mengakses fitur ini.",
+    );
+  }
+  return user;
 }
 
 export async function requirePermission(
-    permission: Permission,
-    explicitToken?: string
+  permission: Permission,
+  explicitToken?: string,
 ): Promise<UserDoc> {
-    const user = await requireAuth(explicitToken);
-    if (!hasPermission(user.role, permission)) {
-        throw new AuthError(
-            'FORBIDDEN',
-            `Akses ditolak: Peran '${user.role}' tidak memiliki izin '${permission}'.`
-        );
-    }
-    return user;
+  const user = await requireAuth(explicitToken);
+  if (!hasPermission(user.role, permission)) {
+    throw new AuthError(
+      "FORBIDDEN",
+      `Akses ditolak: Peran '${user.role}' tidak memiliki izin '${permission}'.`,
+    );
+  }
+  return user;
 }
 
 // ── Page-level Authorization (server boundary for RSC pages) ─────────────────
@@ -177,13 +200,26 @@ export async function requirePermission(
 // Redirects (never renders protected content) to match the existing page-level
 // pattern of redirect('/login') / redirect('/').
 
-export async function requirePagePermission(permission: Permission): Promise<UserDoc> {
-    const user = await getCurrentUser();
-    if (!user) {
-        redirect('/login');
-    }
-    if (!hasPermission(user.role, permission)) {
-        redirect('/');
-    }
-    return user;
+export async function requirePagePermission(
+  permission: Permission,
+): Promise<UserDoc> {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+  if (!hasPermission(user.role, permission)) {
+    redirect("/");
+  }
+  return user;
+}
+
+// ── Actor Helper ──────────────────────────────────────────────────────────────
+// Mengurangi duplikasi pembentukan objek actor di semua stock transaction action.
+
+export function toActor(user: UserDoc) {
+  return {
+    userId: user._id.toHexString(),
+    name: user.name,
+    role: user.role,
+  };
 }

@@ -8,6 +8,11 @@ import {
   deleteCategoryAction,
 } from "@/actions/CategoryActions";
 import type { CategoryView } from "@/lib/StaticData";
+import {
+  masterKey,
+  useCategories,
+  useInvalidateServerState,
+} from "@/hooks/serverState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { FormCard } from "@/components/shared/FormCard";
 import { DataTable } from "@/components/shared/DataTable";
@@ -39,15 +44,26 @@ import {
 /**
  * CategoriesClient.tsx
  *
- * The interactive half of the hybrid master-data page. The list itself is
- * rendered on the server from the cached static payload (`getStaticCategories`)
- * and arrives here as `initial` — so this component never shows a "loading"
- * row on first paint. It only owns the mutations/editing, and after a
- * successful mutation it calls `router.refresh()` so the server re-reads the
- * tag that the Server Action just invalidated (read-your-own-writes).
+ * The interactive half of the master-data page. The rows come from the SERVER
+ * (the page prefetches `getStaticCategories` into the React Query cache), so
+ * `useCategories` returns them on the first render — no `useEffect` fetch and no
+ * loading row.
+ *
+ * Mutations stay Server Actions. On success the action's `updateTag()` has
+ * already refreshed the server-side cache entry, so this component only has to
+ * mark the matching React Query key dirty and `router.refresh()`; the fresh rows
+ * stream back into the SAME key, which is what makes read-your-own-writes work
+ * without a manual client-side refetch.
+ *
+ * The `initial` prop is kept as a defensive fallback: React Query wins when the
+ * hydration payload is present (the normal case), and the server-rendered value
+ * is used if a consumer mounts this outside a hydrated boundary.
  */
 export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
   const router = useRouter();
+  const invalidate = useInvalidateServerState();
+  const { data: cached } = useCategories<CategoryView[]>();
+  const categories = cached ?? initial;
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -63,6 +79,17 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
 
+  /**
+   * Marks the server-state entry dirty, then asks the server for a fresh RSC
+   * render. Both steps matter: the invalidation drops the client cache entry so
+   * the incoming payload is accepted, and `router.refresh()` re-runs the page's
+   * prefetch (which the Server Action's `updateTag()` has already un-cached).
+   */
+  function refreshFromServer() {
+    invalidate(masterKey("categories"));
+    router.refresh();
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -75,7 +102,7 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
       setCode("");
       setName("");
       setDescription("");
-      router.refresh();
+      refreshFromServer();
     } else {
       setError(res.error || "Gagal membuat kategori");
     }
@@ -92,7 +119,7 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
     if (res.success) {
       setMessage(res.message || "Kategori berhasil diperbarui");
       setEditingId(null);
-      router.refresh();
+      refreshFromServer();
     } else {
       setError(res.error || "Gagal memperbarui kategori");
     }
@@ -105,7 +132,7 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
     const res = await deleteCategoryAction(id);
     if (res.success) {
       setMessage(res.message || "Kategori berhasil dinonaktifkan");
-      router.refresh();
+      refreshFromServer();
     } else {
       setError(res.error || "Gagal menghapus kategori");
     }
@@ -209,8 +236,8 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
       <DataTable
         title="Daftar Kategori Terdaftar"
         description="Katalog klasifikasi produk yang saat ini tercatat di database."
-        badgeCount={initial.length}
-        dataLength={initial.length}
+        badgeCount={categories.length}
+        dataLength={categories.length}
         emptyTitle="Belum Ada Kategori"
         emptyDescription="Tambahkan kategori pertama menggunakan formulir di atas."
         emptyIcon={Tags}
@@ -236,7 +263,7 @@ export function CategoriesClient({ initial }: { initial: CategoryView[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {initial.map((c) => (
+            {categories.map((c) => (
               <TableRow
                 key={c.id}
                 className="hover:bg-slate-50/50 transition-colors"

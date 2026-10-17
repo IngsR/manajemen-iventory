@@ -16,9 +16,9 @@
  */
 
 interface CacheEntry<T> {
-    value?: T;
-    expiresAt: number;
-    pending?: Promise<T>;
+  value?: T;
+  expiresAt: number;
+  pending?: Promise<T>;
 }
 
 const store = new Map<string, CacheEntry<unknown>>();
@@ -28,49 +28,49 @@ const store = new Map<string, CacheEntry<unknown>>();
  * result for `ttlMs`. Concurrent calls for the same key await the same promise.
  */
 export async function cached<T>(
-    key: string,
-    ttlMs: number,
-    factory: () => Promise<T>
+  key: string,
+  ttlMs: number,
+  factory: () => Promise<T>,
 ): Promise<T> {
-    const now = Date.now();
-    const hit = store.get(key) as CacheEntry<T> | undefined;
+  const now = Date.now();
+  const hit = store.get(key) as CacheEntry<T> | undefined;
 
-    if (hit) {
-        if (hit.pending) return hit.pending;
-        if (hit.expiresAt > now) return hit.value as T;
-    }
+  if (hit) {
+    if (hit.pending) return hit.pending;
+    if (hit.expiresAt > now) return hit.value as T;
+  }
 
-    const pending = factory()
-        .then((value) => {
-            store.set(key, { value, expiresAt: Date.now() + ttlMs });
-            return value;
-        })
-        .catch((err) => {
-            // Never cache failures — let the next call retry.
-            store.delete(key);
-            throw err;
-        });
+  const pending = factory()
+    .then((value) => {
+      store.set(key, { value, expiresAt: Date.now() + ttlMs });
+      return value;
+    })
+    .catch((err) => {
+      // Never cache failures — let the next call retry.
+      store.delete(key);
+      throw err;
+    });
 
-    store.set(key, { expiresAt: now + ttlMs, pending });
-    return pending;
+  store.set(key, { expiresAt: now + ttlMs, pending });
+  return pending;
 }
 
 /** Drop a single cached key (e.g. after a mutation invalidates a metric). */
 export function invalidate(key: string): void {
-    store.delete(key);
+  store.delete(key);
 }
 
 /** Drop every cached key (used by seeds / tests). */
 export function invalidateAll(): void {
-    store.clear();
+  store.clear();
 }
 
 /** TTL presets so callers stay consistent. */
 export const CacheTTL = {
-    /** Master-data counts — rarely change. */
-    MASTER_DATA: 5 * 60_000,
-    /** Aggregates over the inventory ledger — change on every transaction. */
-    LEDGER: 30_000,
-    /** Fast-changing "recent activity" feeds. */
-    RECENT: 15_000,
+  /** Master-data counts — rarely change. */
+  MASTER_DATA: 5 * 60_000,
+  /** Aggregates over the inventory ledger — change on every transaction. */
+  LEDGER: 30_000,
+  /** Fast-changing "recent activity" feeds. */
+  RECENT: 15_000,
 } as const;
