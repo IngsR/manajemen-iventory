@@ -101,7 +101,13 @@ export default async function AdminWorkflowPage() {
             Alur Tata Kelola & Konfigurasi Sistem
           </h1>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-3xl">
-            Anda adalah <strong className="text-slate-900 font-semibold">pengelola fondasi sistem</strong>. Anda memastikan seluruh master data gudang, kategori, satuan, barang (SKU), dan audit trail terkonfigurasi dengan tepat agar Petugas dan Supervisor dapat beroperasi secara akurat.
+            Anda adalah{" "}
+            <strong className="text-slate-900 font-semibold">
+              pengelola fondasi sistem
+            </strong>
+            . Anda memastikan seluruh master data gudang, kategori, satuan,
+            barang (SKU), dan audit trail terkonfigurasi dengan tepat agar
+            Petugas dan Supervisor dapat beroperasi secara akurat.
           </p>
         </div>
 
@@ -125,10 +131,22 @@ export default async function AdminWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Mengelola data master: Kategori, Satuan, Barang (SKU), Gudang, dan Rak Lokasi.</li>
-            <li>Menetapkan ambang batas minimum persediaan sebagai pemicu peringatan dini.</li>
-            <li>Mengatur akun pengguna dan hak akses operasional (Role-Based Access Control).</li>
-            <li>Memantau audit trail untuk memastikan kepatuhan dan integritas sistem.</li>
+            <li>
+              Mengelola data master: Kategori, Satuan, Barang (SKU), Gudang, dan
+              Rak Lokasi.
+            </li>
+            <li>
+              Menetapkan ambang batas minimum persediaan sebagai pemicu
+              peringatan dini.
+            </li>
+            <li>
+              Mengatur akun pengguna dan hak akses operasional (Role-Based
+              Access Control).
+            </li>
+            <li>
+              Memantau audit trail untuk memastikan kepatuhan dan integritas
+              sistem.
+            </li>
           </ul>
         </div>
 
@@ -140,9 +158,17 @@ export default async function AdminWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Bukan operator fisik harian di lantai gudang (tugas Petugas).</li>
-            <li>Tidak melakukan verifikasi dan approval Stock Opname fisik (tugas Supervisor).</li>
-            <li>Tidak mengubah saldo barang tanpa catatan mutasi atau dokumen resmi.</li>
+            <li>
+              Bukan operator fisik harian di lantai gudang (tugas Petugas).
+            </li>
+            <li>
+              Tidak melakukan verifikasi dan approval Stock Opname fisik (tugas
+              Supervisor).
+            </li>
+            <li>
+              Tidak mengubah saldo barang tanpa catatan mutasi atau dokumen
+              resmi.
+            </li>
           </ul>
         </div>
       </div>
@@ -271,102 +297,126 @@ async function LiveFoundationStatus() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Master Data Menu */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <ShieldCheck className="h-4 w-4 text-blue-600" />
-              <h3 className="text-sm font-bold text-slate-900">Kelola Master Data</h3>
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <ShieldCheck className="h-4 w-4 text-blue-600" />
+            <h3 className="text-sm font-bold text-slate-900">
+              Kelola Master Data
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              { label: "Katalog Barang & SKU", href: "/items", icon: Package },
+              {
+                label: "Fasilitas Gudang",
+                href: "/warehouses",
+                icon: Warehouse,
+              },
+              { label: "Zona & Rak Lokasi", href: "/locations", icon: MapPin },
+              { label: "Kategori Produk", href: "/categories", icon: Tags },
+              { label: "Satuan Ukuran", href: "/units", icon: Ruler },
+              {
+                label: "Koreksi Stok (Adj)",
+                href: "/inventory/adjustment",
+                icon: SlidersHorizontal,
+              },
+            ].map((item) => {
+              const ItemIcon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 text-xs font-semibold text-slate-700 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <ItemIcon className="h-4 w-4 text-blue-600 shrink-0" />
+                    <span>{item.label}</span>
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Audit & Compliance */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-slate-700" />
+              <h3 className="text-sm font-bold text-slate-900">
+                Audit & Log Aktivitas
+              </h3>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { label: "Katalog Barang & SKU", href: "/items", icon: Package },
-                { label: "Fasilitas Gudang", href: "/warehouses", icon: Warehouse },
-                { label: "Zona & Rak Lokasi", href: "/locations", icon: MapPin },
-                { label: "Kategori Produk", href: "/categories", icon: Tags },
-                { label: "Satuan Ukuran", href: "/units", icon: Ruler },
-                { label: "Koreksi Stok (Adj)", href: "/inventory/adjustment", icon: SlidersHorizontal },
-              ].map((item) => {
-                const ItemIcon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/40 text-xs font-semibold text-slate-700 transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <ItemIcon className="h-4 w-4 text-blue-600 shrink-0" />
-                      <span>{item.label}</span>
-                    </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                  </Link>
-                );
-              })}
-            </div>
+            <Link href="/audit">
+              <span className="text-xs font-semibold text-blue-700 hover:underline">
+                Semua Log →
+              </span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            {[
+              {
+                label: "Buku Besar Mutasi",
+                href: "/reports/movements",
+                icon: ScrollText,
+              },
+              {
+                label: "Rekapitulasi Opname",
+                href: "/reports/opnames",
+                icon: FileSpreadsheet,
+              },
+              {
+                label: "Peringatan Stok",
+                href: "/reports/low-stock",
+                icon: SlidersHorizontal,
+              },
+              { label: "Audit Keamanan", href: "/audit", icon: ShieldAlert },
+            ].map((r) => {
+              const RIcon = r.icon;
+              return (
+                <Link
+                  key={r.href}
+                  href={r.href}
+                  className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-blue-50/50 hover:border-blue-200 text-xs font-medium text-slate-700 transition-colors"
+                >
+                  <RIcon className="h-3.5 w-3.5 text-slate-500" />
+                  <span>{r.label}</span>
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Audit & Compliance */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-slate-700" />
-                <h3 className="text-sm font-bold text-slate-900">Audit & Log Aktivitas</h3>
-              </div>
-              <Link href="/audit">
-                <span className="text-xs font-semibold text-blue-700 hover:underline">
-                  Semua Log →
-                </span>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              {[
-                { label: "Buku Besar Mutasi", href: "/reports/movements", icon: ScrollText },
-                { label: "Rekapitulasi Opname", href: "/reports/opnames", icon: FileSpreadsheet },
-                { label: "Peringatan Stok", href: "/reports/low-stock", icon: SlidersHorizontal },
-                { label: "Audit Keamanan", href: "/audit", icon: ShieldAlert },
-              ].map((r) => {
-                const RIcon = r.icon;
-                return (
-                  <Link
-                    key={r.href}
-                    href={r.href}
-                    className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-blue-50/50 hover:border-blue-200 text-xs font-medium text-slate-700 transition-colors"
-                  >
-                    <RIcon className="h-3.5 w-3.5 text-slate-500" />
-                    <span>{r.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-
-            {recentMovements.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">
-                Belum ada aktivitas mutasi tercatat.
-              </p>
-            ) : (
-              <div className="space-y-1.5 pt-1">
-                {recentMovements.slice(0, 3).map((m) => (
-                  <div
-                    key={m._id}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
-                      >
-                        {m.type}
-                      </Badge>
-                      <span className="font-mono font-bold text-slate-800">
-                        {m.sku}
-                      </span>
-                    </div>
-                    <span className="font-extrabold text-slate-900">
-                      {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+          {recentMovements.length === 0 ? (
+            <p className="text-xs text-slate-400 py-4 text-center">
+              Belum ada aktivitas mutasi tercatat.
+            </p>
+          ) : (
+            <div className="space-y-1.5 pt-1">
+              {recentMovements.slice(0, 3).map((m) => (
+                <div
+                  key={m._id}
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
+                    >
+                      {m.type}
+                    </Badge>
+                    <span className="font-mono font-bold text-slate-800">
+                      {m.sku}
                     </span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <span className="font-extrabold text-slate-900">
+                    {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

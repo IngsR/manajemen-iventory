@@ -1,8 +1,8 @@
-version: '3.8'
+version: "3.8"
 
 services:
-    app:
-        build: .
-        container_name: manajemen_inventory_app
-        ports:
-            - '3000:3000'
+  app:
+    build: .
+    container_name: manajemen_inventory_app
+    ports:
+      - "3000:3000"

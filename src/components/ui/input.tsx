@@ -1,5 +1,5 @@
-import * as React from "react"
-import { cn } from "@/lib/Utils"
+import * as React from "react";
+import { cn } from "@/lib/Utils";
 
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
@@ -23,14 +23,14 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           "transition-[border-color,box-shadow] duration-150",
           // Disabled
           "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50",
-          className
+          className,
         )}
         ref={ref}
         {...props}
       />
-    )
-  }
-)
-Input.displayName = "Input"
+    );
+  },
+);
+Input.displayName = "Input";
 
-export { Input }
+export { Input };

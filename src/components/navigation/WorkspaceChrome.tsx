@@ -86,10 +86,7 @@ export function WorkspaceChrome({
           </button>
 
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 group min-w-0"
-          >
+          <Link href="/" className="flex items-center gap-2.5 group min-w-0">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg transition-transform duration-200 group-hover:scale-105 shrink-0">
               <Boxes className="h-4 w-4" />
             </div>
@@ -108,12 +105,21 @@ export function WorkspaceChrome({
         <div className="flex items-center gap-2 sm:gap-3">
           {/* User info - hidden on small screens */}
           <div className="hidden md:flex flex-col items-end">
-            <span className="text-[13px] font-semibold text-white leading-none">{name}</span>
-            <span className="text-[11px] text-white/40 font-mono mt-0.5 leading-none">{email}</span>
+            <span className="text-[13px] font-semibold text-white leading-none">
+              {name}
+            </span>
+            <span className="text-[11px] text-white/40 font-mono mt-0.5 leading-none">
+              {email}
+            </span>
           </div>
 
           {/* Role badge */}
-          <span className={cn("hidden sm:inline text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider", badgeClass)}>
+          <span
+            className={cn(
+              "hidden sm:inline text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider",
+              badgeClass,
+            )}
+          >
             {badgeLabel}
           </span>
 
@@ -157,7 +163,9 @@ export function WorkspaceChrome({
       <div
         className={cn(
           "fixed inset-0 z-50 lg:hidden transition-all duration-300",
-          drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          drawerOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none",
         )}
         role="dialog"
         aria-modal="true"
@@ -174,7 +182,7 @@ export function WorkspaceChrome({
           className={cn(
             "absolute inset-y-0 left-0 w-[280px] app-sidebar flex flex-col shadow-2xl",
             "transition-transform duration-300 ease-smooth",
-            drawerOpen ? "translate-x-0" : "-translate-x-full"
+            drawerOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
           {/* Drawer header */}
@@ -184,8 +192,12 @@ export function WorkspaceChrome({
                 <Boxes className="h-4 w-4" />
               </div>
               <div className="flex flex-col leading-none">
-                <span className="text-white font-bold text-[15px] tracking-tight">Inventori</span>
-                <span className="text-white/40 text-[11px] font-medium tracking-wider mt-0.5">{deskName}</span>
+                <span className="text-white font-bold text-[15px] tracking-tight">
+                  Inventori
+                </span>
+                <span className="text-white/40 text-[11px] font-medium tracking-wider mt-0.5">
+                  {deskName}
+                </span>
               </div>
             </div>
             <button
@@ -213,10 +225,19 @@ export function WorkspaceChrome({
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-semibold text-white truncate">{name}</p>
-                <p className="text-[11px] text-white/40 font-mono truncate">{email}</p>
+                <p className="text-[13px] font-semibold text-white truncate">
+                  {name}
+                </p>
+                <p className="text-[11px] text-white/40 font-mono truncate">
+                  {email}
+                </p>
               </div>
-              <span className={cn("text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0", badgeClass)}>
+              <span
+                className={cn(
+                  "text-[11px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0",
+                  badgeClass,
+                )}
+              >
                 {badgeLabel}
               </span>
             </div>

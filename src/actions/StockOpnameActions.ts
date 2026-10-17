@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requirePermission, isAuthError } from '@/lib/Auth';
+import { requirePermission, isAuthError, toActor } from '@/lib/Auth';
 import { isInventoryError } from '@/services/inventory/InventoryErrors';
 import {
     createStockOpname,
@@ -17,13 +17,8 @@ import {
     PopulatedOpnameDetail,
 } from '@/services/inventory/StockOpnameService';
 import { StockOpnameDoc, StockOpnameStatus } from '@/models/StockOpnameModel';
-
-export interface OpnameActionResponse<T = unknown> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    code?: string;
-}
+import { OpnameActionResponse } from './types';
+import { serialize } from '@/lib/Utils';
 
 export async function createStockOpnameAction(
     formData: FormData
@@ -44,14 +39,10 @@ export async function createStockOpnameAction(
             warehouseId,
             notes,
             autoSnapshot,
-            actor: {
-                userId: user._id.toHexString(),
-                name: user.name,
-                role: user.role,
-            },
+            actor: toActor(user),
         });
 
-        try { revalidatePath('/inventory/stock-opname'); } catch {}
+        revalidatePath('/inventory/stock-opname');
         return { success: true, data: result };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
@@ -66,12 +57,8 @@ export async function populateStockOpnameAction(
 ): Promise<OpnameActionResponse<{ populatedCount: number }>> {
     try {
         const user = await requirePermission('STOCK_OPNAME_CREATE');
-        const result = await populateStockOpnameFromWarehouse(stockOpnameId, {
-            userId: user._id.toHexString(),
-            name: user.name,
-            role: user.role,
-        });
-        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        const result = await populateStockOpnameFromWarehouse(stockOpnameId, toActor(user));
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
         return { success: true, data: result };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
@@ -85,12 +72,8 @@ export async function setAllOpnameItemsMatchedAction(
 ): Promise<OpnameActionResponse<{ updatedCount: number }>> {
     try {
         const user = await requirePermission('STOCK_OPNAME_CREATE');
-        const result = await setAllOpnameItemsMatched(stockOpnameId, {
-            userId: user._id.toHexString(),
-            name: user.name,
-            role: user.role,
-        });
-        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        const result = await setAllOpnameItemsMatched(stockOpnameId, toActor(user));
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
         return { success: true, data: result };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
@@ -123,14 +106,10 @@ export async function addStockOpnameItemAction(
             itemId,
             locationId,
             countedQuantity,
-            actor: {
-                userId: user._id.toHexString(),
-                name: user.name,
-                role: user.role,
-            },
+            actor: toActor(user),
         });
 
-        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
         return { success: true };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
@@ -146,10 +125,8 @@ export async function removeStockOpnameItemAction(
 ): Promise<OpnameActionResponse> {
     try {
         await requirePermission('STOCK_OPNAME_CREATE');
-
         await removeStockOpnameItem(stockOpnameId, stockOpnameItemId);
-
-        try { revalidatePath(`/inventory/stock-opname/${stockOpnameId}`); } catch {}
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
         return { success: true };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
@@ -163,17 +140,10 @@ export async function submitStockOpnameAction(
 ): Promise<OpnameActionResponse<{ opnameNumber: string }>> {
     try {
         const user = await requirePermission('STOCK_OPNAME_SUBMIT');
+        const result = await submitStockOpname(stockOpnameId, toActor(user));
 
-        const result = await submitStockOpname(stockOpnameId, {
-            userId: user._id.toHexString(),
-            name: user.name,
-            role: user.role,
-        });
-
-        try {
-            revalidatePath('/inventory/stock-opname');
-            revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
-        } catch {}
+        revalidatePath('/inventory/stock-opname');
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
 
         return { success: true, data: result };
     } catch (err) {
@@ -189,20 +159,13 @@ export async function approveStockOpnameAction(
 ): Promise<OpnameActionResponse<{ opnameNumber: string; adjustmentsCount: number }>> {
     try {
         const user = await requirePermission('STOCK_OPNAME_APPROVE');
+        const result = await approveStockOpname(stockOpnameId, toActor(user));
 
-        const result = await approveStockOpname(stockOpnameId, {
-            userId: user._id.toHexString(),
-            name: user.name,
-            role: user.role,
-        });
-
-        try {
-            revalidatePath('/inventory/stock-opname');
-            revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
-            revalidatePath('/dashboard/supervisor');
-            revalidatePath('/dashboard/admin');
-            revalidatePath('/audit');
-        } catch {}
+        revalidatePath('/inventory/stock-opname');
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
+        revalidatePath('/dashboard/supervisor');
+        revalidatePath('/dashboard/admin');
+        revalidatePath('/audit');
 
         return { success: true, data: result };
     } catch (err) {
@@ -230,21 +193,11 @@ export async function rejectStockOpnameAction(
             };
         }
 
-        const result = await rejectStockOpname(
-            stockOpnameId,
-            rejectionReason,
-            {
-                userId: user._id.toHexString(),
-                name: user.name,
-                role: user.role,
-            }
-        );
+        const result = await rejectStockOpname(stockOpnameId, rejectionReason, toActor(user));
 
-        try {
-            revalidatePath('/inventory/stock-opname');
-            revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
-            revalidatePath('/audit');
-        } catch {}
+        revalidatePath('/inventory/stock-opname');
+        revalidatePath(`/inventory/stock-opname/${stockOpnameId}`);
+        revalidatePath('/audit');
 
         return { success: true, data: result };
     } catch (err) {
@@ -261,7 +214,7 @@ export async function getStockOpnamesAction(
     try {
         await requirePermission('STOCK_OPNAME_VIEW');
         const list = await getStockOpnames(statusFilter);
-        return { success: true, data: JSON.parse(JSON.stringify(list)) };
+        return { success: true, data: serialize(list) };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
         return { success: false, error: 'Gagal mengambil daftar stock opname.' };
@@ -277,7 +230,7 @@ export async function getStockOpnameDetailAction(
         if (!detail) {
             return { success: false, error: 'Dokumen stock opname tidak ditemukan.' };
         }
-        return { success: true, data: JSON.parse(JSON.stringify(detail)) };
+        return { success: true, data: serialize(detail) };
     } catch (err) {
         if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
         return { success: false, error: 'Gagal mengambil detail stock opname.' };

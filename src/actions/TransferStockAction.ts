@@ -2,8 +2,8 @@
 
 import { transferStock, TransferStockResult } from '@/services/inventory/TransferStockService';
 import { isInventoryError } from '@/services/inventory/InventoryErrors';
-import { requirePermission, isAuthError } from '@/lib/Auth';
-import { TransactionResponse } from './TransactionTypes';
+import { requirePermission, isAuthError, toActor } from '@/lib/Auth';
+import { TransactionResponse } from './types';
 
 export type { TransferStockResult };
 
@@ -35,21 +35,13 @@ export async function transferStockAction(
             quantity,
             referenceNumber,
             reason,
-            actor: {
-                name: user.name,
-                role: user.role,
-                userId: user._id.toHexString(),
-            },
+            actor: toActor(user),
         });
 
         return { success: true, data: result };
     } catch (err) {
-        if (isAuthError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
-        if (isInventoryError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
+        if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
+        if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
         console.error('[transferStockAction]', err);
         return { success: false, error: 'Terjadi kesalahan tidak terduga', code: 'TRANSACTION_FAILED' };
     }

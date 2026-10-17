@@ -1,214 +1,205 @@
-'use server';
+"use server";
 
-import { ObjectId } from 'mongodb';
-import { getUnitCollection, UnitDoc } from '@/models/UnitModel';
-import { getItemCollection } from '@/models/ItemModel';
-import { updateTag } from 'next/cache';
-import { StaticTags } from '@/lib/StaticData';
-import { ActionResponse } from './CategoryActions';
-import { requirePermission, requireAuth, isAuthError } from '@/lib/Auth';
-import { createAuditLog } from '@/services/AuditLogService';
+import { ObjectId } from "mongodb";
+import { getUnitCollection, UnitDoc } from "@/models/UnitModel";
+import { getItemCollection } from "@/models/ItemModel";
+import { updateTag } from "next/cache";
+import { StaticTags } from "@/lib/StaticData";
+import { ActionResponse } from "./types";
+import { requirePermission, requireAuth, isAuthError } from "@/lib/Auth";
+import { createAuditLog, auditActor } from "@/services/AuditLogService";
+import { serialize } from "@/lib/Utils";
 
 export async function getUnitsAction(): Promise<ActionResponse<UnitDoc[]>> {
-    try {
-        await requireAuth();
-        const collection = await getUnitCollection();
-        const units = await collection
-            .find({ isDeleted: false })
-            .sort({ name: 1 })
-            .toArray();
+  try {
+    await requireAuth();
+    const collection = await getUnitCollection();
+    const units = await collection
+      .find({ isDeleted: false })
+      .sort({ name: 1 })
+      .toArray();
 
-        const serialized = JSON.parse(JSON.stringify(units));
-        return { success: true, data: serialized };
-    } catch (err) {
-        if (isAuthError(err)) return { success: false, error: err.message };
-        console.error('[getUnitsAction error]', err);
-        return { success: false, error: 'Gagal memuat daftar satuan.' };
-    }
+    return { success: true, data: serialize(units) };
+  } catch (err) {
+    if (isAuthError(err)) return { success: false, error: err.message };
+    console.error("[getUnitsAction error]", err);
+    return { success: false, error: "Gagal memuat daftar satuan." };
+  }
 }
 
 export async function createUnitAction(input: {
-    code: string;
-    name: string;
+  code: string;
+  name: string;
 }): Promise<ActionResponse<string>> {
-    try {
-        const user = await requirePermission('UNIT_CREATE');
+  try {
+    const user = await requirePermission("UNIT_CREATE");
 
-        const code = input.code.trim().toUpperCase();
-        const name = input.name.trim();
+    const code = input.code.trim().toUpperCase();
+    const name = input.name.trim();
 
-        if (!code || !name) {
-            return { success: false, error: 'Kode dan Nama Satuan wajib diisi.' };
-        }
-
-        const collection = await getUnitCollection();
-        const existing = await collection.findOne({ code, isDeleted: false });
-        if (existing) {
-            return { success: false, error: `Satuan dengan kode "${code}" sudah terdaftar.` };
-        }
-
-        const now = new Date();
-        const doc: UnitDoc = {
-            code,
-            name,
-            status: 'ACTIVE',
-            isDeleted: false,
-            createdAt: now,
-            updatedAt: now,
-        };
-
-        const result = await collection.insertOne(doc);
-
-        await createAuditLog({
-            actorId: user._id,
-            actorName: user.name,
-            actorRole: user.role,
-            action: 'CREATE',
-            resource: 'UNIT',
-            resourceId: result.insertedId.toHexString(),
-            details: { code, name },
-        });
-
-        // Hybrid rendering: refresh the cached master-data entry instead of the route
-        // (see src/lib/StaticData.ts).
-        updateTag(StaticTags.UNITS);
-        // The item catalogue embeds unit codes, so its cached labels may change too.
-        updateTag(StaticTags.ITEMS);
-        return {
-            success: true,
-            data: result.insertedId.toHexString(),
-            message: 'Satuan berhasil dibuat.',
-        };
-    } catch (err) {
-        if (isAuthError(err)) return { success: false, error: err.message };
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+    if (!code || !name) {
+      return { success: false, error: "Kode dan Nama Satuan wajib diisi." };
     }
+
+    const collection = await getUnitCollection();
+    const existing = await collection.findOne({ code, isDeleted: false });
+    if (existing) {
+      return {
+        success: false,
+        error: `Satuan dengan kode "${code}" sudah terdaftar.`,
+      };
+    }
+
+    const now = new Date();
+    const doc: UnitDoc = {
+      code,
+      name,
+      status: "ACTIVE",
+      isDeleted: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const result = await collection.insertOne(doc);
+
+    await createAuditLog({
+      ...auditActor(user),
+      action: "CREATE",
+      resource: "UNIT",
+      resourceId: result.insertedId.toHexString(),
+      details: { code, name },
+    });
+
+    updateTag(StaticTags.UNITS);
+    // Katalog item menyimpan kode satuan, invalidasi cache-nya juga
+    updateTag(StaticTags.ITEMS);
+    return {
+      success: true,
+      data: result.insertedId.toHexString(),
+      message: "Satuan berhasil dibuat.",
+    };
+  } catch (err) {
+    if (isAuthError(err)) return { success: false, error: err.message };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 export async function updateUnitAction(
-    id: string,
-    input: {
-        name: string;
-        status: 'ACTIVE' | 'INACTIVE';
-    }
+  id: string,
+  input: {
+    name: string;
+    status: "ACTIVE" | "INACTIVE";
+  },
 ): Promise<ActionResponse> {
-    try {
-        const user = await requirePermission('UNIT_UPDATE');
+  try {
+    const user = await requirePermission("UNIT_UPDATE");
 
-        if (!ObjectId.isValid(id)) {
-            return { success: false, error: 'ID Satuan tidak valid.' };
-        }
-
-        const name = input.name.trim();
-        if (!name) {
-            return { success: false, error: 'Nama Satuan tidak boleh kosong.' };
-        }
-
-        const collection = await getUnitCollection();
-        const objId = new ObjectId(id);
-
-        const oldUnit = await collection.findOne({ _id: objId, isDeleted: false });
-        if (!oldUnit) {
-            return { success: false, error: 'Satuan tidak ditemukan.' };
-        }
-
-        const before: Record<string, unknown> = {};
-        const after: Record<string, unknown> = {};
-
-        if (oldUnit.name !== name) {
-            before.name = oldUnit.name;
-            after.name = name;
-        }
-        if (oldUnit.status !== input.status) {
-            before.status = oldUnit.status;
-            after.status = input.status;
-        }
-
-        await collection.updateOne(
-            { _id: objId, isDeleted: false },
-            {
-                $set: {
-                    name,
-                    status: input.status,
-                    updatedAt: new Date(),
-                },
-            }
-        );
-
-        await createAuditLog({
-            actorId: user._id,
-            actorName: user.name,
-            actorRole: user.role,
-            action: 'UPDATE',
-            resource: 'UNIT',
-            resourceId: id,
-            details: { before, after },
-        });
-
-        updateTag(StaticTags.UNITS);
-        updateTag(StaticTags.ITEMS);
-        return { success: true, message: 'Satuan berhasil diperbarui.' };
-    } catch (err) {
-        if (isAuthError(err)) return { success: false, error: err.message };
-        return { success: false, error: err instanceof Error ? err.message : String(err) };
+    if (!ObjectId.isValid(id)) {
+      return { success: false, error: "ID Satuan tidak valid." };
     }
+
+    const name = input.name.trim();
+    if (!name) {
+      return { success: false, error: "Nama Satuan tidak boleh kosong." };
+    }
+
+    const collection = await getUnitCollection();
+    const objId = new ObjectId(id);
+
+    const oldUnit = await collection.findOne({ _id: objId, isDeleted: false });
+    if (!oldUnit) {
+      return { success: false, error: "Satuan tidak ditemukan." };
+    }
+
+    const before: Record<string, unknown> = {};
+    const after: Record<string, unknown> = {};
+
+    if (oldUnit.name !== name) {
+      before.name = oldUnit.name;
+      after.name = name;
+    }
+    if (oldUnit.status !== input.status) {
+      before.status = oldUnit.status;
+      after.status = input.status;
+    }
+
+    await collection.updateOne(
+      { _id: objId, isDeleted: false },
+      { $set: { name, status: input.status, updatedAt: new Date() } },
+    );
+
+    await createAuditLog({
+      ...auditActor(user),
+      action: "UPDATE",
+      resource: "UNIT",
+      resourceId: id,
+      details: { before, after },
+    });
+
+    updateTag(StaticTags.UNITS);
+    updateTag(StaticTags.ITEMS);
+    return { success: true, message: "Satuan berhasil diperbarui." };
+  } catch (err) {
+    if (isAuthError(err)) return { success: false, error: err.message };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 export async function deleteUnitAction(id: string): Promise<ActionResponse> {
-    try {
-        const user = await requirePermission('UNIT_UPDATE');
+  try {
+    const user = await requirePermission("UNIT_UPDATE");
 
-        if (!ObjectId.isValid(id)) {
-            return { success: false, error: 'ID Satuan tidak valid.' };
-        }
-
-        const objId = new ObjectId(id);
-        const itemCollection = await getItemCollection();
-
-        // Referential integrity check
-        const referencedItem = await itemCollection.findOne({
-            unitId: objId,
-            isDeleted: false,
-        });
-
-        if (referencedItem) {
-            return {
-                success: false,
-                error: `Tidak dapat menghapus satuan: masih digunakan oleh barang "${referencedItem.name}" (${referencedItem.sku}).`,
-            };
-        }
-
-        const collection = await getUnitCollection();
-        const result = await collection.updateOne(
-            { _id: objId, isDeleted: false },
-            {
-                $set: {
-                    isDeleted: true,
-                    status: 'INACTIVE',
-                    updatedAt: new Date(),
-                },
-            }
-        );
-
-        if (result.matchedCount === 0) {
-            return { success: false, error: 'Satuan tidak ditemukan.' };
-        }
-
-        await createAuditLog({
-            actorId: user._id,
-            actorName: user.name,
-            actorRole: user.role,
-            action: 'DELETE',
-            resource: 'UNIT',
-            resourceId: id,
-        });
-
-        updateTag(StaticTags.UNITS);
-        updateTag(StaticTags.ITEMS);
-        return { success: true, message: 'Satuan berhasil dinonaktifkan / dihapus.' };
-    } catch (err) {
-        if (isAuthError(err)) return { success: false, error: err.message };
-        console.error('[deleteUnitAction error]', err);
-        return { success: false, error: 'Gagal menghapus satuan.' };
+    if (!ObjectId.isValid(id)) {
+      return { success: false, error: "ID Satuan tidak valid." };
     }
+
+    const objId = new ObjectId(id);
+    const itemCollection = await getItemCollection();
+
+    // Referential integrity check
+    const referencedItem = await itemCollection.findOne({
+      unitId: objId,
+      isDeleted: false,
+    });
+    if (referencedItem) {
+      return {
+        success: false,
+        error: `Tidak dapat menghapus satuan: masih digunakan oleh barang "${referencedItem.name}" (${referencedItem.sku}).`,
+      };
+    }
+
+    const collection = await getUnitCollection();
+    const result = await collection.updateOne(
+      { _id: objId, isDeleted: false },
+      { $set: { isDeleted: true, status: "INACTIVE", updatedAt: new Date() } },
+    );
+
+    if (result.matchedCount === 0) {
+      return { success: false, error: "Satuan tidak ditemukan." };
+    }
+
+    await createAuditLog({
+      ...auditActor(user),
+      action: "DELETE",
+      resource: "UNIT",
+      resourceId: id,
+    });
+
+    updateTag(StaticTags.UNITS);
+    updateTag(StaticTags.ITEMS);
+    return {
+      success: true,
+      message: "Satuan berhasil dinonaktifkan / dihapus.",
+    };
+  } catch (err) {
+    if (isAuthError(err)) return { success: false, error: err.message };
+    console.error("[deleteUnitAction error]", err);
+    return { success: false, error: "Gagal menghapus satuan." };
+  }
 }

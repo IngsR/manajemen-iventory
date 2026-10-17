@@ -1,4 +1,4 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 // ── Hybrid Rendering (Cache Components / Partial Prerendering) ────────────────
 //
@@ -16,7 +16,7 @@ import type { NextConfig } from 'next';
 //
 // See: docs/static-rendering.md and src/lib/StaticData.ts
 const nextConfig: NextConfig = {
-    cacheComponents: true,
+  cacheComponents: true,
 };
 
 export default nextConfig;

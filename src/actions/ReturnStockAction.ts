@@ -2,8 +2,8 @@
 
 import { returnStock, ReturnStockResult } from '@/services/inventory/ReturnStockService';
 import { isInventoryError } from '@/services/inventory/InventoryErrors';
-import { requirePermission, isAuthError } from '@/lib/Auth';
-import { TransactionResponse } from './TransactionTypes';
+import { requirePermission, isAuthError, toActor } from '@/lib/Auth';
+import { TransactionResponse } from './types';
 
 export type { ReturnStockResult };
 
@@ -23,27 +23,11 @@ export async function returnStockAction(
             return { success: false, error: 'Item dan lokasi wajib diisi', code: 'INVALID_INPUT' };
         }
 
-        const result = await returnStock({
-            itemId,
-            locationId,
-            quantity,
-            referenceNumber,
-            reason,
-            actor: {
-                name: user.name,
-                role: user.role,
-                userId: user._id.toHexString(),
-            },
-        });
-
+        const result = await returnStock({ itemId, locationId, quantity, referenceNumber, reason, actor: toActor(user) });
         return { success: true, data: result };
     } catch (err) {
-        if (isAuthError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
-        if (isInventoryError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
+        if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
+        if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
         console.error('[returnStockAction]', err);
         return { success: false, error: 'Terjadi kesalahan tidak terduga', code: 'TRANSACTION_FAILED' };
     }

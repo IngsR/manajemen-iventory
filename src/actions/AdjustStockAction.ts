@@ -2,8 +2,8 @@
 
 import { adjustStock, AdjustStockResult } from '@/services/inventory/AdjustStockService';
 import { isInventoryError } from '@/services/inventory/InventoryErrors';
-import { requirePermission, isAuthError } from '@/lib/Auth';
-import { TransactionResponse } from './TransactionTypes';
+import { requirePermission, isAuthError, toActor } from '@/lib/Auth';
+import { TransactionResponse } from './types';
 
 export type { AdjustStockResult };
 
@@ -37,21 +37,13 @@ export async function adjustStockAction(
             quantityDelta,
             reason: reason.trim(),
             referenceNumber,
-            actor: {
-                name: user.name,
-                role: user.role,
-                userId: user._id.toHexString(),
-            },
+            actor: toActor(user),
         });
 
         return { success: true, data: result };
     } catch (err) {
-        if (isAuthError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
-        if (isInventoryError(err)) {
-            return { success: false, error: err.message, code: err.code };
-        }
+        if (isAuthError(err)) return { success: false, error: err.message, code: err.code };
+        if (isInventoryError(err)) return { success: false, error: err.message, code: err.code };
         console.error('[adjustStockAction]', err);
         return { success: false, error: 'Terjadi kesalahan tidak terduga', code: 'TRANSACTION_FAILED' };
     }

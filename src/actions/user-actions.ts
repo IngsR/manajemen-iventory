@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { ObjectId } from 'mongodb';
 import { getUserCollection, UserDoc, UserRole, UserStatus } from '@/models/UserModel';
 import { requirePermission, isAuthError, hashPassword } from '@/lib/Auth';
-import { createAuditLog } from '@/services/AuditLogService';
+import { createAuditLog, auditActor } from '@/services/AuditLogService';
 
 export interface SafeUser {
     _id: string;
@@ -47,7 +47,9 @@ export async function getUsersAction(): Promise<UserActionResponse<SafeUser[]>> 
     }
 }
 
-export async function createUserAction(formData: FormData): Promise<UserActionResponse<{ userId: string }>> {
+export async function createUserAction(
+    formData: FormData
+): Promise<UserActionResponse<{ userId: string }>> {
     try {
         const actor = await requirePermission('USER_CREATE');
 
@@ -93,9 +95,7 @@ export async function createUserAction(formData: FormData): Promise<UserActionRe
         await col.insertOne(doc);
 
         await createAuditLog({
-            actorId: actor._id,
-            actorName: actor.name,
-            actorRole: actor.role,
+            ...auditActor(actor),
             action: 'CREATE',
             resource: 'USER',
             resourceId: newId.toHexString(),
@@ -103,10 +103,8 @@ export async function createUserAction(formData: FormData): Promise<UserActionRe
             timestamp: now,
         });
 
-        try {
-            revalidatePath('/users');
-            revalidatePath('/audit');
-        } catch {}
+        revalidatePath('/users');
+        revalidatePath('/audit');
 
         return { success: true, message: `Pengguna ${name} berhasil didaftarkan.`, data: { userId: newId.toHexString() } };
     } catch (err) {
@@ -144,18 +142,11 @@ export async function updateUserRoleAction(
 
         await col.updateOne(
             { _id: userOid },
-            {
-                $set: {
-                    role: newRole,
-                    updatedAt: now,
-                },
-            }
+            { $set: { role: newRole, updatedAt: now } }
         );
 
         await createAuditLog({
-            actorId: actor._id,
-            actorName: actor.name,
-            actorRole: actor.role,
+            ...auditActor(actor),
             action: 'UPDATE',
             resource: 'USER',
             resourceId: userId,
@@ -163,10 +154,8 @@ export async function updateUserRoleAction(
             timestamp: now,
         });
 
-        try {
-            revalidatePath('/users');
-            revalidatePath('/audit');
-        } catch {}
+        revalidatePath('/users');
+        revalidatePath('/audit');
 
         return { success: true, message: `Peran berhasil diubah menjadi ${newRole}.` };
     } catch (err) {
@@ -198,18 +187,11 @@ export async function toggleUserStatusAction(
 
         await col.updateOne(
             { _id: userOid },
-            {
-                $set: {
-                    status: newStatus,
-                    updatedAt: now,
-                },
-            }
+            { $set: { status: newStatus, updatedAt: now } }
         );
 
         await createAuditLog({
-            actorId: actor._id,
-            actorName: actor.name,
-            actorRole: actor.role,
+            ...auditActor(actor),
             action: 'UPDATE',
             resource: 'USER',
             resourceId: userId,
@@ -217,10 +199,8 @@ export async function toggleUserStatusAction(
             timestamp: now,
         });
 
-        try {
-            revalidatePath('/users');
-            revalidatePath('/audit');
-        } catch {}
+        revalidatePath('/users');
+        revalidatePath('/audit');
 
         return { success: true, message: `Status pengguna berhasil diubah menjadi ${newStatus}.` };
     } catch (err) {

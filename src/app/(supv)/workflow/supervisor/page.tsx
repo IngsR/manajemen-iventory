@@ -98,7 +98,13 @@ export default async function SupervisorWorkflowPage() {
             Alur Kerja Pengawasan & Persetujuan
           </h1>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-3xl">
-            Anda adalah <strong className="text-slate-900 font-semibold">pengawas dan verifikator</strong> akurasi persediaan. Tugas utama Anda memantau stok kritis, memeriksa selisih (variance) dari penghitungan Petugas, dan memutuskan persetujuan (Approve/Reject) Stock Opname.
+            Anda adalah{" "}
+            <strong className="text-slate-900 font-semibold">
+              pengawas dan verifikator
+            </strong>{" "}
+            akurasi persediaan. Tugas utama Anda memantau stok kritis, memeriksa
+            selisih (variance) dari penghitungan Petugas, dan memutuskan
+            persetujuan (Approve/Reject) Stock Opname.
           </p>
         </div>
 
@@ -122,10 +128,18 @@ export default async function SupervisorWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Memantau barang menipis (low stock) dan histori mutasi barang.</li>
+            <li>
+              Memantau barang menipis (low stock) dan histori mutasi barang.
+            </li>
             <li>Memeriksa hasil hitung fisik yang diajukan oleh Petugas.</li>
-            <li>Menganalisis selisih kuantitas fisik vs sistem (variance analysis).</li>
-            <li>Memberikan keputusan resmi persetujuan (Approve) atau penolakan (Reject).</li>
+            <li>
+              Menganalisis selisih kuantitas fisik vs sistem (variance
+              analysis).
+            </li>
+            <li>
+              Memberikan keputusan resmi persetujuan (Approve) atau penolakan
+              (Reject).
+            </li>
           </ul>
         </div>
 
@@ -137,9 +151,18 @@ export default async function SupervisorWorkflowPage() {
             </h2>
           </div>
           <ul className="space-y-2 text-xs sm:text-sm text-slate-600 list-disc pl-5">
-            <li>Bukan eksekutor fisik rutin di gudang (Receive/Issue dilakukan Petugas).</li>
-            <li>Tidak mengelola master konfigurasi sistem atau akun pengguna (Wewenang Admin).</li>
-            <li>Tidak mengubah saldo barang secara langsung tanpa dokumen opname resmi.</li>
+            <li>
+              Bukan eksekutor fisik rutin di gudang (Receive/Issue dilakukan
+              Petugas).
+            </li>
+            <li>
+              Tidak mengelola master konfigurasi sistem atau akun pengguna
+              (Wewenang Admin).
+            </li>
+            <li>
+              Tidak mengubah saldo barang secara langsung tanpa dokumen opname
+              resmi.
+            </li>
           </ul>
         </div>
       </div>
@@ -244,7 +267,8 @@ async function LiveSupervisionStatus() {
           Status Pengawasan & Antrean
         </h2>
         <p className="text-xs text-slate-500">
-          Data kondisi persediaan kritis dan dokumen opname yang memerlukan tindakan.
+          Data kondisi persediaan kritis dan dokumen opname yang memerlukan
+          tindakan.
         </p>
       </div>
 
@@ -280,179 +304,184 @@ async function LiveSupervisionStatus() {
         />
       </div>
       {/* Antrean Approval Table */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <h3 className="text-sm font-bold text-slate-900">
+              Antrean Dokumen Opname Menunggu Review
+            </h3>
+          </div>
+          <Link href="/inventory/stock-opname">
+            <span className="text-xs font-semibold text-amber-700 hover:underline">
+              Buka Semua Dokumen →
+            </span>
+          </Link>
+        </div>
+
+        {pendingApprovals.data.length === 0 ? (
+          <p className="text-xs text-slate-400 py-6 text-center">
+            Tidak ada dokumen opname yang menunggu keputusan saat ini.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
+                  <th className="pb-2.5">No. Dokumen</th>
+                  <th className="pb-2.5">Diajukan Oleh</th>
+                  <th className="pb-2.5">Waktu Submit</th>
+                  <th className="pb-2.5 text-center">Jumlah Item</th>
+                  <th className="pb-2.5 text-right">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {pendingApprovals.data.map((op) => (
+                  <tr
+                    key={op._id}
+                    className="hover:bg-slate-50/60 transition-colors"
+                  >
+                    <td className="py-3 font-mono font-bold text-slate-800">
+                      {op.opnameNumber}
+                    </td>
+                    <td className="py-3 text-slate-700 font-medium">
+                      {op.createdByName}
+                    </td>
+                    <td className="py-3 text-slate-500">
+                      {op.submittedAt
+                        ? new Date(op.submittedAt).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "-"}
+                    </td>
+                    <td className="py-3 text-center font-bold text-slate-800">
+                      {op.itemCount}
+                    </td>
+                    <td className="py-3 text-right">
+                      <Link href="/inventory/stock-opname">
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
+                        >
+                          Review & Putuskan
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Monitoring Bottom Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Low Stock Watchlist */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
               <h3 className="text-sm font-bold text-slate-900">
-                Antrean Dokumen Opname Menunggu Review
+                Barang Perlu Restock Segera
               </h3>
             </div>
-            <Link href="/inventory/stock-opname">
+            <Link href="/reports/low-stock">
               <span className="text-xs font-semibold text-amber-700 hover:underline">
-                Buka Semua Dokumen →
+                Semua Laporan →
               </span>
             </Link>
           </div>
-
-          {pendingApprovals.data.length === 0 ? (
+          {lowStockItems.length === 0 ? (
             <p className="text-xs text-slate-400 py-6 text-center">
-              Tidak ada dokumen opname yang menunggu keputusan saat ini.
+              Semua item persediaan berada di atas batas minimum.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
-                    <th className="pb-2.5">No. Dokumen</th>
-                    <th className="pb-2.5">Diajukan Oleh</th>
-                    <th className="pb-2.5">Waktu Submit</th>
-                    <th className="pb-2.5 text-center">Jumlah Item</th>
-                    <th className="pb-2.5 text-right">Tindakan</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {pendingApprovals.data.map((op) => (
-                    <tr key={op._id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 font-mono font-bold text-slate-800">
-                        {op.opnameNumber}
-                      </td>
-                      <td className="py-3 text-slate-700 font-medium">
-                        {op.createdByName}
-                      </td>
-                      <td className="py-3 text-slate-500">
-                        {op.submittedAt
-                          ? new Date(op.submittedAt).toLocaleDateString("id-ID", {
-                              day: "2-digit",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "-"}
-                      </td>
-                      <td className="py-3 text-center font-bold text-slate-800">
-                        {op.itemCount}
-                      </td>
-                      <td className="py-3 text-right">
-                        <Link href="/inventory/stock-opname">
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
-                          >
-                            Review & Putuskan
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-2">
+              {lowStockItems.map((item) => (
+                <div
+                  key={item.sku}
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
+                >
+                  <div>
+                    <span className="font-bold text-slate-800">
+                      {item.name}
+                    </span>
+                    <span className="block font-mono text-[10px] text-slate-400">
+                      {item.sku}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-extrabold text-rose-600">
+                      {item.totalStock}
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                      Min: {item.minStock}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Monitoring Bottom Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Low Stock Watchlist */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-500" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Barang Perlu Restock Segera
-                </h3>
-              </div>
-              <Link href="/reports/low-stock">
-                <span className="text-xs font-semibold text-amber-700 hover:underline">
-                  Semua Laporan →
-                </span>
-              </Link>
+        {/* Recent Movement Observation */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-slate-900">
+                Pengawasan Mutasi Terakhir
+              </h3>
             </div>
-            {lowStockItems.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                Semua item persediaan berada di atas batas minimum.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {lowStockItems.map((item) => (
-                  <div
-                    key={item.sku}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-slate-800">{item.name}</span>
-                      <span className="block font-mono text-[10px] text-slate-400">
-                        {item.sku}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-extrabold text-rose-600">
-                        {item.totalStock}
-                      </span>
-                      <span className="block text-[10px] text-slate-400">
-                        Min: {item.minStock}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <Link href="/reports/movements">
+              <span className="text-xs font-semibold text-amber-700 hover:underline">
+                Buku Besar →
+              </span>
+            </Link>
           </div>
-
-          {/* Recent Movement Observation */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-blue-600" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Pengawasan Mutasi Terakhir
-                </h3>
-              </div>
-              <Link href="/reports/movements">
-                <span className="text-xs font-semibold text-amber-700 hover:underline">
-                  Buku Besar →
-                </span>
-              </Link>
+          {recentMovements.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">
+              Belum ada pergerakan barang yang tercatat.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {recentMovements.map((m) => (
+                <div
+                  key={m._id}
+                  className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
+                    >
+                      {m.type}
+                    </Badge>
+                    <span className="font-mono font-bold text-slate-800">
+                      {m.sku}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-extrabold text-slate-900">
+                      {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
+                    </span>
+                    <span className="block text-[10px] text-slate-400">
+                      {new Date(m.timestamp).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            {recentMovements.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">
-                Belum ada pergerakan barang yang tercatat.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {recentMovements.map((m) => (
-                  <div
-                    key={m._id}
-                    className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-bold font-mono px-1.5 py-0.2 ${movementBadgeClass[m.type] || "bg-slate-50 text-slate-600 border-slate-200"}`}
-                      >
-                        {m.type}
-                      </Badge>
-                      <span className="font-mono font-bold text-slate-800">
-                        {m.sku}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-extrabold text-slate-900">
-                        {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                      </span>
-                      <span className="block text-[10px] text-slate-400">
-                        {new Date(m.timestamp).toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
+      </div>
     </div>
   );
 }
